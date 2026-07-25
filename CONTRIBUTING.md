@@ -5,7 +5,7 @@ Thanks for your interest in contributing! This document covers everything you ne
 ## Getting Started
 
 ```bash
-git clone https://github.com/GethosTheWalrus/proxmox-mcp.git
+git clone https://github.com/jelmervdm/proxmox-mcp.git
 cd proxmox-mcp
 
 python3 -m venv venv
@@ -48,14 +48,14 @@ black src/proxmox_mcp/    # formatting
 
 ## Commit Message Convention
 
-This project uses [Conventional Commits](https://www.conventionalcommits.org/) and [python-semantic-release](https://python-semantic-release.readthedocs.io/) for automated versioning. **Your commit messages directly determine the next version number**, so please follow the format:
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) for clean git history. Please follow the format:
 
-| Prefix | When to use | Version bump |
-|--------|-------------|--------------|
-| `fix:` | A bug fix | Patch (`0.1.0` → `0.1.1`) |
-| `feat:` | A new feature | Minor (`0.1.0` → `0.2.0`) |
-| `feat!:` or `BREAKING CHANGE:` in footer | A breaking API change | Major (`0.1.0` → `1.0.0`) |
-| `chore:`, `docs:`, `test:`, `ci:`, `refactor:` | Everything else | No bump |
+| Prefix | When to use |
+|--------|-------------|
+| `fix:` | A bug fix |
+| `feat:` | A new feature |
+| `feat!:` or `BREAKING CHANGE:` in footer | A breaking API change |
+| `chore:`, `docs:`, `test:`, `ci:`, `refactor:` | Everything else |
 
 Examples:
 
@@ -67,16 +67,12 @@ feat!: rename PROXMOX_HOST env var to PROXMOX_ADDRESS
 BREAKING CHANGE: PROXMOX_HOST has been renamed to PROXMOX_ADDRESS
 ```
 
-Commits that don't follow this format won't break anything, but they won't trigger a release either.
-
 ## Releasing
 
-Releases are fully automated. On every merge to `main`:
+Releases and Docker container images (`ghcr.io/jelmervdm/proxmox-mcp`) are created for this repository via GitHub Releases and GitHub Actions:
 
-1. `python-semantic-release` inspects commits since the last tag, bumps the version in `pyproject.toml`, and pushes a `vX.Y.Z` tag
-2. The publish workflow triggers on that tag and uploads the new version to PyPI
-
-There is nothing to do manually.
+1. Tag the release or run `gh release create vX.Y.Z`
+2. The GitHub Action workflow (`docker-publish.yml`) builds and publishes the multi-platform Docker container image to GHCR automatically when tags or updates to `main` are pushed.
 
 ## Security
 

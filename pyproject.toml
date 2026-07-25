@@ -34,9 +34,9 @@ router = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/GethosTheWalrus/proxmox-mcp"
-Repository = "https://github.com/GethosTheWalrus/proxmox-mcp"
-Issues = "https://github.com/GethosTheWalrus/proxmox-mcp/issues"
+Homepage = "https://github.com/jelmervdm/proxmox-mcp"
+Repository = "https://github.com/jelmervdm/proxmox-mcp"
+Issues = "https://github.com/jelmervdm/proxmox-mcp/issues"
 
 [project.scripts]
 proxmox-mcp-server = "proxmox_mcp.server:main"
