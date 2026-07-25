@@ -117,7 +117,7 @@ def register(mcp: FastMCP) -> None:
             scsi0: First SCSI disk (e.g. 'local-lvm:32' for 32GB on local-lvm).
             ide2: IDE device, often used for CD-ROM (e.g. 'local:iso/ubuntu.iso,media=cdrom').
             net0: Network device (e.g. 'virtio,bridge=vmbr0').
-            boot: Boot order (e.g. 'order=scsi0;ide2;net0').
+            boot: Boot order (e.g. 'order=scsi0').
             bios: BIOS type: seabios, ovmf (UEFI).
             machine: Machine type (e.g. 'q35', 'i440fx').
             cdrom: CD-ROM ISO image path.
