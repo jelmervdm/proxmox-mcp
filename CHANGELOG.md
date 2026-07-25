@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-07-24
+
+### Added
+- Integrated ContextForge Gateway natively into the Docker image.
+- Added `ENABLE_CONTEXTFORGE_GATEWAY` environment variable to conditionally run the gateway.
+- Made the Gateway port configurable via `GATEWAY_PORT` (defaults to 8000).
+
+## [1.0.1] - 2026-07-24
+
+### Fixed
+- Fixed an import error in IBM ContextForge by removing a semicolon from the `create_vm` tool docstring.
+- Added GitHub Actions workflow to publish the Docker image to GitHub Container Registry (GHCR).
+
 ## [0.1.0] - 2026-03-23
 
 ### Added
