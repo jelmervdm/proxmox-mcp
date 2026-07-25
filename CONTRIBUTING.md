@@ -1,5 +1,7 @@
 # Contributing to proxmox-mcp
 
+> **Note**: This is a fork maintained by `@jelmervdm`. If you are looking to contribute to the original upstream project, please visit [GethosTheWalrus/proxmox-mcp](https://github.com/GethosTheWalrus/proxmox-mcp).
+
 Thanks for your interest in contributing! This document covers everything you need to get started.
 
 ## Getting Started

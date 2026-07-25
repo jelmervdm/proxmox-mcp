@@ -1,6 +1,6 @@
 # Proxmox MCP Server (Fork)
 
-> **Note**: This is a fork of the original `proxmox-mcp` repository, modified to ensure compatibility with IBM ContextForge.
+> **Note**: This is a fork of the original [`proxmox-mcp`](https://github.com/GethosTheWalrus/proxmox-mcp) created by [Mike Toscano](https://github.com/GethosTheWalrus), modified to add native IBM ContextForge Gateway support and automated container deployments.
 
 ## Overview
 
@@ -444,6 +444,7 @@ pytest tests/ -v
 docker build -t mcp/proxmox:latest .
 ```
 
-## License
+## Acknowledgments & License
 
-Apache-2.0
+- Original project created by [Mike Toscano (GethosTheWalrus)](https://github.com/GethosTheWalrus/proxmox-mcp).
+- Distributed under the [Apache-2.0 License](LICENSE).
