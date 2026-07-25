@@ -1,7 +1,7 @@
 services:
   proxmox-mcp:
     build: .
-    image: proxmox-mcp:latest
+    image: ghcr.io/jelmervdm/proxmox-mcp:main
     container_name: proxmox-mcp
     stdin_open: true
     environment:
@@ -13,4 +13,7 @@ services:
       - PROXMOX_PASSWORD=${PROXMOX_PASSWORD:-}
       - PROXMOX_VERIFY_SSL=${PROXMOX_VERIFY_SSL:-0}
       - TOOL_ROUTING=${TOOL_ROUTING:-}
+      - ENABLE_CONTEXTFORGE_GATEWAY=${ENABLE_CONTEXTFORGE_GATEWAY:-false}
+    ports:
+      - "8000:8000"
     restart: unless-stopped

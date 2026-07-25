@@ -416,6 +416,7 @@ Recommended when running from PyPI via [`uvx`](https://docs.astral.sh/uv/guides/
 | SSL verification | `PROXMOX_VERIFY_SSL` | `0` |
 | Request timeout (seconds) | `PROXMOX_TIMEOUT` | `30` |
 | Tool routing | `TOOL_ROUTING` | `false` |
+| Enable ContextForge Gateway | `ENABLE_CONTEXTFORGE_GATEWAY` | `false` |
 
 Either `PROXMOX_TOKEN_NAME` + `PROXMOX_TOKEN_VALUE` or `PROXMOX_PASSWORD` is required for authentication.
 
