@@ -1,4 +1,6 @@
-# Proxmox MCP Server
+# Proxmox MCP Server (Fork)
+
+> **Note**: This is a fork of the original `proxmox-mcp` repository, modified to ensure compatibility with IBM ContextForge.
 
 ## Overview
 
@@ -6,8 +8,7 @@ This is a Model Context Protocol (MCP) server that provides tools for interactin
 
 ## Distributions
 
-- PyPI   - https://pypi.org/project/proxmox-mcp-server/
-- Docker - https://hub.docker.com/r/mcp/proxmox
+- **Docker (GHCR)**: `ghcr.io/jelmervdm/proxmox-mcp:main`
 
 ## Tools
 
