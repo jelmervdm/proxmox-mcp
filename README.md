@@ -383,23 +383,67 @@ Recommended when running via container. Podman is fully supported on Fedora/RHEL
 
 > **Tip for Docker vs Podman**: Simply replace `"command": "podman"` with `"command": "docker"` if using standard Docker or `podman-docker`. Ensure `-i` is used and **never** `-t` (TTY) to avoid carriage-return formatting corruption over stdio.
 
-### Python via uvx (environment variables)
+### Local Python Execution (without PyPI)
 
-Recommended when running from PyPI via [`uvx`](https://docs.astral.sh/uv/guides/tools/). No local install required — `uvx` fetches and runs the package automatically.
+If you prefer to run directly from source without containers:
 
+**Via `uv` (local workspace directory):**
 ```json
 {
   "servers": {
     "proxmox": {
-      "command": "uvx",
-      "args": ["proxmox-mcp-server"],
+      "command": "uv",
+      "args": ["--directory", "/path/to/proxmox-mcp", "run", "proxmox-mcp-server"],
       "env": {
         "PROXMOX_HOST": "192.168.1.100",
         "PROXMOX_PORT": "8006",
         "PROXMOX_USER": "root@pam",
         "PROXMOX_TOKEN_NAME": "mcp",
         "PROXMOX_TOKEN_VALUE": "your-token-here",
-        "PROXMOX_VERIFY_SSL": "0"
+        "PROXMOX_VERIFY_SSL": "0",
+        "PROXMOX_TIMEOUT": "30"
+      }
+    }
+  }
+}
+```
+
+**Via `python` (editable install `pip install -e .`):**
+```json
+{
+  "servers": {
+    "proxmox": {
+      "command": "python",
+      "args": ["-m", "proxmox_mcp.server"],
+      "env": {
+        "PROXMOX_HOST": "192.168.1.100",
+        "PROXMOX_PORT": "8006",
+        "PROXMOX_USER": "root@pam",
+        "PROXMOX_TOKEN_NAME": "mcp",
+        "PROXMOX_TOKEN_VALUE": "your-token-here",
+        "PROXMOX_VERIFY_SSL": "0",
+        "PROXMOX_TIMEOUT": "30"
+      }
+    }
+  }
+}
+```
+
+**Via `uvx` directly from GitHub repository:**
+```json
+{
+  "servers": {
+    "proxmox": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/jelmervdm/proxmox-mcp.git", "proxmox-mcp-server"],
+      "env": {
+        "PROXMOX_HOST": "192.168.1.100",
+        "PROXMOX_PORT": "8006",
+        "PROXMOX_USER": "root@pam",
+        "PROXMOX_TOKEN_NAME": "mcp",
+        "PROXMOX_TOKEN_VALUE": "your-token-here",
+        "PROXMOX_VERIFY_SSL": "0",
+        "PROXMOX_TIMEOUT": "30"
       }
     }
   }
