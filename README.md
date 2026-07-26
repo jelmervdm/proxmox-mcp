@@ -343,19 +343,19 @@ For more information about Proxmox VE, refer to the official documentation:
 - **Proxmox VE Wiki**: https://pve.proxmox.com/wiki/Main_Page
 - **proxmoxer Python Library**: https://proxmoxer.github.io/docs/
 
-## VS Code MCP Config
+## VS Code & Antigravity IDE MCP Config
 
-Add a `.vscode/mcp.json` file to your workspace. Choose the approach that fits your setup.
+Add a `.vscode/mcp.json` file to your workspace (or add to your IDE's MCP settings). Choose the approach that fits your setup.
 
-### Docker (environment variables)
+### Docker / Podman (environment variables)
 
-Recommended when running via Docker. Configuration is passed through environment variables.
+Recommended when running via container. Podman is fully supported on Fedora/RHEL as a rootless drop-in replacement for Docker:
 
 ```json
 {
   "servers": {
     "proxmox": {
-      "command": "docker",
+      "command": "podman",
       "args": [
         "run", "-i", "--rm",
         "-e", "PROXMOX_HOST",
@@ -365,7 +365,7 @@ Recommended when running via Docker. Configuration is passed through environment
         "-e", "PROXMOX_TOKEN_VALUE",
         "-e", "PROXMOX_VERIFY_SSL",
         "-e", "PROXMOX_TIMEOUT",
-        "mcp/proxmox"
+        "ghcr.io/jelmervdm/proxmox-mcp:main"
       ],
       "env": {
         "PROXMOX_HOST": "192.168.1.100",
@@ -379,6 +379,8 @@ Recommended when running via Docker. Configuration is passed through environment
   }
 }
 ```
+
+> **Tip for Docker vs Podman**: Simply replace `"command": "podman"` with `"command": "docker"` if using standard Docker or `podman-docker`. Ensure `-i` is used and **never** `-t` (TTY) to avoid carriage-return formatting corruption over stdio.
 
 ### Python via uvx (environment variables)
 
