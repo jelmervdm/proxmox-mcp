@@ -353,7 +353,7 @@ Recommended when running via container. Podman is fully supported on Fedora/RHEL
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "proxmox": {
       "command": "podman",
       "args": [
@@ -390,7 +390,7 @@ If you prefer to run directly from source without containers:
 **Via `uv` (local workspace directory):**
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "proxmox": {
       "command": "uv",
       "args": ["--directory", "/path/to/proxmox-mcp", "run", "proxmox-mcp-server"],
@@ -411,7 +411,7 @@ If you prefer to run directly from source without containers:
 **Via `python` (editable install `pip install -e .`):**
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "proxmox": {
       "command": "python",
       "args": ["-m", "proxmox_mcp.server"],
@@ -432,7 +432,7 @@ If you prefer to run directly from source without containers:
 **Via `uvx` directly from GitHub repository:**
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "proxmox": {
       "command": "uvx",
       "args": ["--from", "git+https://github.com/jelmervdm/proxmox-mcp.git", "proxmox-mcp-server"],
