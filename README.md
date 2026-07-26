@@ -373,7 +373,8 @@ Recommended when running via container. Podman is fully supported on Fedora/RHEL
         "PROXMOX_USER": "root@pam",
         "PROXMOX_TOKEN_NAME": "mcp",
         "PROXMOX_TOKEN_VALUE": "your-token-here",
-        "PROXMOX_VERIFY_SSL": "0"
+        "PROXMOX_VERIFY_SSL": "0",
+        "PROXMOX_TIMEOUT": "30"
       }
     }
   }

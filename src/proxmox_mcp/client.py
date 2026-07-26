@@ -20,8 +20,8 @@ def _get_client() -> ProxmoxAPI:
         raise RuntimeError("PROXMOX_HOST environment variable is required")
 
     verify_ssl = os.environ.get("PROXMOX_VERIFY_SSL", "0").lower() in ("1", "true", "yes")
-    port = int(os.environ.get("PROXMOX_PORT", "8006"))
-    timeout = int(os.environ.get("PROXMOX_TIMEOUT", "30"))
+    port = int(os.environ.get("PROXMOX_PORT") or "8006")
+    timeout = int(os.environ.get("PROXMOX_TIMEOUT") or "30")
 
     token_name = os.environ.get("PROXMOX_TOKEN_NAME", "")
     token_value = os.environ.get("PROXMOX_TOKEN_VALUE", "")
