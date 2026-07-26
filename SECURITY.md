@@ -19,4 +19,4 @@ You can expect an acknowledgement within **48 hours** and a resolution or status
 | Latest  | ✅        |
 | Older   | ❌        |
 
-Security fixes are released as patch versions and published to PyPI immediately.
+Security fixes are released as patch versions and updated immediately.
