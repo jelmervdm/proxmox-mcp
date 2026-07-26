@@ -41,10 +41,7 @@ def _get_client() -> ProxmoxAPI:
     password = os.environ.get("PROXMOX_PASSWORD", "")
     user = os.environ.get("PROXMOX_USER", "root@pam")
     if not password:
-        raise RuntimeError(
-            "Either PROXMOX_TOKEN_NAME+PROXMOX_TOKEN_VALUE or "
-            "PROXMOX_USER+PROXMOX_PASSWORD must be set"
-        )
+        raise RuntimeError("Either PROXMOX_TOKEN_NAME+PROXMOX_TOKEN_VALUE or " "PROXMOX_USER+PROXMOX_PASSWORD must be set")
 
     return ProxmoxAPI(
         host,

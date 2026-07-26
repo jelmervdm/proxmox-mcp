@@ -138,9 +138,18 @@ def register(mcp: FastMCP) -> None:
             "scsihw": scsihw,
         }
         for key, val in [
-            ("name", name), ("scsi0", scsi0), ("ide2", ide2), ("net0", net0),
-            ("boot", boot), ("bios", bios), ("machine", machine), ("cdrom", cdrom),
-            ("agent", agent), ("description", description), ("pool", pool), ("tags", tags),
+            ("name", name),
+            ("scsi0", scsi0),
+            ("ide2", ide2),
+            ("net0", net0),
+            ("boot", boot),
+            ("bios", bios),
+            ("machine", machine),
+            ("cdrom", cdrom),
+            ("agent", agent),
+            ("description", description),
+            ("pool", pool),
+            ("tags", tags),
         ]:
             if val:
                 params[key] = val
@@ -189,8 +198,15 @@ def register(mcp: FastMCP) -> None:
         """
         params: dict = {}
         for key, val in [
-            ("name", name), ("cpu", cpu), ("net0", net0), ("description", description),
-            ("agent", agent), ("boot", boot), ("tags", tags), ("hotplug", hotplug), ("delete", delete),
+            ("name", name),
+            ("cpu", cpu),
+            ("net0", net0),
+            ("description", description),
+            ("agent", agent),
+            ("boot", boot),
+            ("tags", tags),
+            ("hotplug", hotplug),
+            ("delete", delete),
         ]:
             if val:
                 params[key] = val
@@ -539,8 +555,12 @@ def register(mcp: FastMCP) -> None:
         """
         params: dict = {}
         for key, val in [
-            ("ciuser", ciuser), ("cipassword", cipassword), ("sshkeys", sshkeys),
-            ("ipconfig0", ipconfig0), ("nameserver", nameserver), ("searchdomain", searchdomain),
+            ("ciuser", ciuser),
+            ("cipassword", cipassword),
+            ("sshkeys", sshkeys),
+            ("ipconfig0", ipconfig0),
+            ("nameserver", nameserver),
+            ("searchdomain", searchdomain),
         ]:
             if val:
                 params[key] = val

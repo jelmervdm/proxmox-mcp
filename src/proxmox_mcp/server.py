@@ -94,9 +94,7 @@ def _ensure_router_indexed() -> None:
         return
 
     all_tools = _all_tools()
-    tool_pairs = [
-        (t.name, (t.description or t.name)[:200]) for t in all_tools
-    ]
+    tool_pairs = [(t.name, (t.description or t.name)[:200]) for t in all_tools]
     router.index(tool_pairs)
     _router_indexed = True
 
@@ -104,10 +102,7 @@ def _ensure_router_indexed() -> None:
 def _filtered_list_tools() -> list[Any]:
     """Return only the 3 always-visible tools (static)."""
     tm = mcp._tool_manager  # type: ignore[attr-defined]
-    return [
-        t for t in tm._tools.values()  # type: ignore[attr-defined]
-        if t.name in _ALWAYS_VISIBLE
-    ]
+    return [t for t in tm._tools.values() if t.name in _ALWAYS_VISIBLE]  # type: ignore[attr-defined]
 
 
 def _tool_summary(tool: Any) -> str:

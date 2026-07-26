@@ -87,6 +87,7 @@ class TestGetClient:
                     if mod._client is None:
                         mod._client = mod._get_client()
                     return mod._client
+
                 c1 = _real_get_client()
                 c2 = _real_get_client()
                 assert c1 is c2 is mock

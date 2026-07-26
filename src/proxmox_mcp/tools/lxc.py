@@ -149,11 +149,18 @@ def register(mcp: FastMCP) -> None:
         if storage and not rootfs:
             params["storage"] = storage
         for key, val in [
-            ("hostname", hostname), ("password", password),
-            ("ssh-public-keys", ssh_public_keys), ("rootfs", rootfs),
-            ("net0", net0), ("nameserver", nameserver), ("searchdomain", searchdomain),
-            ("features", features), ("description", description), ("pool", pool),
-            ("tags", tags), ("mp0", mp0),
+            ("hostname", hostname),
+            ("password", password),
+            ("ssh-public-keys", ssh_public_keys),
+            ("rootfs", rootfs),
+            ("net0", net0),
+            ("nameserver", nameserver),
+            ("searchdomain", searchdomain),
+            ("features", features),
+            ("description", description),
+            ("pool", pool),
+            ("tags", tags),
+            ("mp0", mp0),
         ]:
             if val:
                 params[key] = val
@@ -204,9 +211,14 @@ def register(mcp: FastMCP) -> None:
         """
         params: dict = {}
         for key, val in [
-            ("hostname", hostname), ("net0", net0), ("nameserver", nameserver),
-            ("searchdomain", searchdomain), ("description", description),
-            ("features", features), ("tags", tags), ("delete", delete),
+            ("hostname", hostname),
+            ("net0", net0),
+            ("nameserver", nameserver),
+            ("searchdomain", searchdomain),
+            ("description", description),
+            ("features", features),
+            ("tags", tags),
+            ("delete", delete),
         ]:
             if val:
                 params[key] = val
@@ -342,8 +354,12 @@ def register(mcp: FastMCP) -> None:
         """
         params: dict = {"newid": newid}
         for key, val in [
-            ("hostname", hostname), ("target", target), ("storage", storage),
-            ("description", description), ("pool", pool), ("snapname", snapname),
+            ("hostname", hostname),
+            ("target", target),
+            ("storage", storage),
+            ("description", description),
+            ("pool", pool),
+            ("snapname", snapname),
         ]:
             if val:
                 params[key] = val

@@ -211,8 +211,7 @@ def register(mcp: FastMCP) -> None:
             volume: Backup volume ID.
             filepath: Path within the backup (default '/').
         """
-        return format_response(api_request("get", f"/nodes/{node}/storage/{storage}/file-restore/list",
-                                           volume=volume, filepath=filepath))
+        return format_response(api_request("get", f"/nodes/{node}/storage/{storage}/file-restore/list", volume=volume, filepath=filepath))
 
     @mcp.tool()
     def download_file_restore(node: str, storage: str, volume: str, filepath: str) -> str:
@@ -224,5 +223,4 @@ def register(mcp: FastMCP) -> None:
             volume: Backup volume ID.
             filepath: Path of the file to download from the backup.
         """
-        return format_response(api_request("get", f"/nodes/{node}/storage/{storage}/file-restore/download",
-                                           volume=volume, filepath=filepath))
+        return format_response(api_request("get", f"/nodes/{node}/storage/{storage}/file-restore/download", volume=volume, filepath=filepath))

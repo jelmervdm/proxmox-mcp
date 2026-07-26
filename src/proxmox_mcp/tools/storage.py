@@ -77,10 +77,18 @@ def register(mcp: FastMCP) -> None:
         """
         params: dict = {"storage": storage, "type": type}
         for key, val in [
-            ("path", path), ("server", server), ("export", export),
-            ("vgname", vgname), ("thinpool", thinpool), ("pool", pool),
-            ("portal", portal), ("target", target), ("datastore", datastore),
-            ("content", content), ("nodes", nodes), ("prune-backups", prune_backups),
+            ("path", path),
+            ("server", server),
+            ("export", export),
+            ("vgname", vgname),
+            ("thinpool", thinpool),
+            ("pool", pool),
+            ("portal", portal),
+            ("target", target),
+            ("datastore", datastore),
+            ("content", content),
+            ("nodes", nodes),
+            ("prune-backups", prune_backups),
         ]:
             if val:
                 params[key] = val
@@ -372,11 +380,18 @@ def register(mcp: FastMCP) -> None:
             ashift: ashift value (default 12).
             compression: Compression (on, off, lz4, zstd, etc.).
         """
-        return format_response(api_request(
-            "post", f"/nodes/{node}/disks/zfs",
-            name=name, raidlevel=raidlevel, devices=devices,
-            add_storage=int(add_to_storage), ashift=ashift, compression=compression,
-        ))
+        return format_response(
+            api_request(
+                "post",
+                f"/nodes/{node}/disks/zfs",
+                name=name,
+                raidlevel=raidlevel,
+                devices=devices,
+                add_storage=int(add_to_storage),
+                ashift=ashift,
+                compression=compression,
+            )
+        )
 
     @mcp.tool()
     def list_directory_storage(node: str) -> str:
@@ -398,10 +413,16 @@ def register(mcp: FastMCP) -> None:
             filesystem: Filesystem type (ext4, xfs).
             add_to_storage: Auto-add as Proxmox storage.
         """
-        return format_response(api_request(
-            "post", f"/nodes/{node}/disks/directory",
-            name=name, device=device, filesystem=filesystem, add_storage=int(add_to_storage),
-        ))
+        return format_response(
+            api_request(
+                "post",
+                f"/nodes/{node}/disks/directory",
+                name=name,
+                device=device,
+                filesystem=filesystem,
+                add_storage=int(add_to_storage),
+            )
+        )
 
     @mcp.tool()
     def initialize_gpt(node: str, disk: str) -> str:

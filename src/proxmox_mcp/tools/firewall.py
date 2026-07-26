@@ -99,8 +99,7 @@ def register(mcp: FastMCP) -> None:
             pos: Rule position (-1 = append).
         """
         params: dict = {"action": action, "type": type, "enable": enable}
-        for key, val in [("source", source), ("dest", dest), ("proto", proto), ("sport", sport),
-                         ("dport", dport), ("iface", iface), ("macro", macro), ("comment", comment), ("log", log)]:
+        for key, val in [("source", source), ("dest", dest), ("proto", proto), ("sport", sport), ("dport", dport), ("iface", iface), ("macro", macro), ("comment", comment), ("log", log)]:
             if val:
                 params[key] = val
         if pos >= 0:
@@ -143,8 +142,7 @@ def register(mcp: FastMCP) -> None:
             params["action"] = action
         if enable >= 0:
             params["enable"] = enable
-        for key, val in [("source", source), ("dest", dest), ("proto", proto), ("sport", sport),
-                         ("dport", dport), ("macro", macro), ("comment", comment), ("delete", delete)]:
+        for key, val in [("source", source), ("dest", dest), ("proto", proto), ("sport", sport), ("dport", dport), ("macro", macro), ("comment", comment), ("delete", delete)]:
             if val:
                 params[key] = val
         if moveto >= 0:
@@ -219,8 +217,7 @@ def register(mcp: FastMCP) -> None:
             comment: Description.
         """
         params: dict = {"action": action, "type": type, "enable": enable}
-        for key, val in [("source", source), ("dest", dest), ("proto", proto), ("sport", sport),
-                         ("dport", dport), ("macro", macro), ("comment", comment)]:
+        for key, val in [("source", source), ("dest", dest), ("proto", proto), ("sport", sport), ("dport", dport), ("macro", macro), ("comment", comment)]:
             if val:
                 params[key] = val
         return format_response(api_request("post", f"/cluster/firewall/groups/{group}", **params))
@@ -433,9 +430,17 @@ def register(mcp: FastMCP) -> None:
 
     @mcp.tool()
     def create_vm_firewall_rule(
-        node: str, vmid: int, action: str, type: str, enable: int = 1,
-        source: str = "", dest: str = "", proto: str = "",
-        dport: str = "", macro: str = "", comment: str = "",
+        node: str,
+        vmid: int,
+        action: str,
+        type: str,
+        enable: int = 1,
+        source: str = "",
+        dest: str = "",
+        proto: str = "",
+        dport: str = "",
+        macro: str = "",
+        comment: str = "",
     ) -> str:
         """Create a firewall rule for a QEMU VM.
 
@@ -453,8 +458,7 @@ def register(mcp: FastMCP) -> None:
             comment: Description.
         """
         params: dict = {"action": action, "type": type, "enable": enable}
-        for key, val in [("source", source), ("dest", dest), ("proto", proto),
-                         ("dport", dport), ("macro", macro), ("comment", comment)]:
+        for key, val in [("source", source), ("dest", dest), ("proto", proto), ("dport", dport), ("macro", macro), ("comment", comment)]:
             if val:
                 params[key] = val
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/firewall/rules", **params))
@@ -481,9 +485,17 @@ def register(mcp: FastMCP) -> None:
 
     @mcp.tool()
     def create_container_firewall_rule(
-        node: str, vmid: int, action: str, type: str, enable: int = 1,
-        source: str = "", dest: str = "", proto: str = "",
-        dport: str = "", macro: str = "", comment: str = "",
+        node: str,
+        vmid: int,
+        action: str,
+        type: str,
+        enable: int = 1,
+        source: str = "",
+        dest: str = "",
+        proto: str = "",
+        dport: str = "",
+        macro: str = "",
+        comment: str = "",
     ) -> str:
         """Create a firewall rule for an LXC container.
 
@@ -501,8 +513,7 @@ def register(mcp: FastMCP) -> None:
             comment: Description.
         """
         params: dict = {"action": action, "type": type, "enable": enable}
-        for key, val in [("source", source), ("dest", dest), ("proto", proto),
-                         ("dport", dport), ("macro", macro), ("comment", comment)]:
+        for key, val in [("source", source), ("dest", dest), ("proto", proto), ("dport", dport), ("macro", macro), ("comment", comment)]:
             if val:
                 params[key] = val
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/firewall/rules", **params))

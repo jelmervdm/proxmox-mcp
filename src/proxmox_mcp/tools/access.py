@@ -62,8 +62,7 @@ def register(mcp: FastMCP) -> None:
         params: dict = {"userid": userid}
         if password:
             params["password"] = password
-        for key, val in [("email", email), ("firstname", firstname), ("lastname", lastname),
-                         ("groups", groups), ("comment", comment)]:
+        for key, val in [("email", email), ("firstname", firstname), ("lastname", lastname), ("groups", groups), ("comment", comment)]:
             if val:
                 params[key] = val
         if not enable:
@@ -98,8 +97,7 @@ def register(mcp: FastMCP) -> None:
             append: Append groups instead of replacing.
         """
         params: dict = {}
-        for key, val in [("email", email), ("firstname", firstname), ("lastname", lastname),
-                         ("groups", groups), ("comment", comment)]:
+        for key, val in [("email", email), ("firstname", firstname), ("lastname", lastname), ("groups", groups), ("comment", comment)]:
             if val:
                 params[key] = val
         if not enable:

@@ -29,9 +29,7 @@ class TestQemuTools:
     def test_create_vm(self, mock_proxmox_client):
         mock_proxmox_client.nodes.pve1.qemu.post.return_value = "UPID:pve1:00001234"
         result = api_request("post", "/nodes/pve1/qemu", vmid=102, name="test-vm", memory=4096, cores=2)
-        mock_proxmox_client.nodes.pve1.qemu.post.assert_called_once_with(
-            vmid=102, name="test-vm", memory=4096, cores=2
-        )
+        mock_proxmox_client.nodes.pve1.qemu.post.assert_called_once_with(vmid=102, name="test-vm", memory=4096, cores=2)
 
     def test_start_vm(self, mock_proxmox_client):
         mock_proxmox_client.nodes.pve1.qemu.__getattr__("100").status.start.post.return_value = "UPID:..."
@@ -61,9 +59,13 @@ class TestLxcTools:
     def test_create_container(self, mock_proxmox_client):
         mock_proxmox_client.nodes.pve1.lxc.post.return_value = "UPID:pve1:..."
         result = api_request(
-            "post", "/nodes/pve1/lxc",
-            vmid=201, hostname="test-ct", ostemplate="local:vztmpl/debian-12.tar.zst",
-            memory=512, cores=1,
+            "post",
+            "/nodes/pve1/lxc",
+            vmid=201,
+            hostname="test-ct",
+            ostemplate="local:vztmpl/debian-12.tar.zst",
+            memory=512,
+            cores=1,
         )
         mock_proxmox_client.nodes.pve1.lxc.post.assert_called_once()
 

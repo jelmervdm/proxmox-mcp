@@ -94,8 +94,12 @@ def register(mcp: FastMCP) -> None:
         """
         params: dict = {}
         for key, val in [
-            ("keyboard", keyboard), ("language", language), ("console", console),
-            ("http-proxy", http_proxy), ("email-from", email_from), ("description", description),
+            ("keyboard", keyboard),
+            ("language", language),
+            ("console", console),
+            ("http-proxy", http_proxy),
+            ("email-from", email_from),
+            ("description", description),
             ("delete", delete),
         ]:
             if val:
@@ -369,10 +373,17 @@ def register(mcp: FastMCP) -> None:
             pg_num: Number of placement groups (default 128).
             application: Pool application (rbd, cephfs, rgw).
         """
-        return format_response(api_request(
-            "post", f"/nodes/{node}/ceph/pool",
-            name=name, size=size, min_size=min_size, pg_num=pg_num, application=application,
-        ))
+        return format_response(
+            api_request(
+                "post",
+                f"/nodes/{node}/ceph/pool",
+                name=name,
+                size=size,
+                min_size=min_size,
+                pg_num=pg_num,
+                application=application,
+            )
+        )
 
     @mcp.tool()
     def list_ceph_monitors(node: str) -> str:
