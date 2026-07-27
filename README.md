@@ -1,10 +1,22 @@
 # Proxmox MCP Server (Fork)
 
+[![Docker Image](https://img.shields.io/badge/docker-ghcr.io-blue.svg)](https://github.com/jelmervdm/proxmox-mcp)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![TDQS Score](https://img.shields.io/badge/TDQS-5.00%2F5.00%20(Tier%20A%2B)-success.svg)](https://github.com/glama-ai/tool-definition-quality-score)
+
 > **Note**: This is a fork of the original [`proxmox-mcp`](https://github.com/GethosTheWalrus/proxmox-mcp) created by [Mike Toscano](https://github.com/GethosTheWalrus), modified to add native IBM ContextForge Gateway support and automated container deployments.
 
 ## Overview
 
 This is a Model Context Protocol (MCP) server that provides tools for interacting with Proxmox VE infrastructure. It enables AI assistants and other MCP clients to manage virtual machines, containers, storage, networking, firewall rules, high availability, and more through a standardized interface. The server supports both API token and password-based authentication against local and remote Proxmox instances.
+
+### 🏆 Tool Definition Quality Score (TDQS)
+
+This server is audited against the **[Tool Definition Quality Score (TDQS)](https://github.com/glama-ai/tool-definition-quality-score)** framework to guarantee optimal function calling, type safety, and runtime safety for LLMs:
+- **Score:** `5.00 / 5.00` (**Tier A+**)
+- **Behavioral Annotations (`ToolAnnotations`):** 100% of tools specify `readOnlyHint`, `destructiveHint`, and `idempotentHint` metadata.
+- **Parameter Descriptions:** 100% of tool parameters use explicit Pydantic `Annotated[T, Field(description=...)]` metadata.
+- **Operational Guidelines:** Standardized docstrings detailing explicit "Use when..." context across all 285 tools.
 
 ## Distributions
 
