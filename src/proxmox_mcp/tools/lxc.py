@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from proxmox_mcp.client import api_request, format_response
 
@@ -12,18 +16,29 @@ def register(mcp: FastMCP) -> None:
 
     # ── Listing & Status ──────────────────────────────────────────────
 
-    @mcp.tool()
-    def list_containers(node: str) -> str:
-        """List all LXC containers on a node with status, memory, CPU, and disk info.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def list_containers(
+        node: Annotated[str, Field(description="PVE host node name (e.g., 'pve1').")],
+    ) -> str:
+        """List all LXC containers on a node with status, memory, CPU, and disk metrics.
+
+        Use when inspecting active or stopped containers on a host.
+        To view detailed configuration for a specific container, use get_container_config instead.
 
         Args:
             node: The node name.
         """
         return format_response(api_request("get", f"/nodes/{node}/lxc"))
 
-    @mcp.tool()
-    def get_container_status(node: str, vmid: int) -> str:
-        """Get the current runtime status of a container.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_container_status(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="LXC container ID (CTID, e.g., 101).")],
+    ) -> str:
+        """Get current runtime status (state, CPU utilization, RAM usage, swap, uptime) of a container.
+
+        Use when checking live operational metrics of a container.
+        To list all containers on a node, use list_containers instead.
 
         Args:
             node: The node name.
@@ -31,9 +46,14 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/lxc/{vmid}/status/current"))
 
-    @mcp.tool()
-    def get_container_config(node: str, vmid: int) -> str:
-        """Get the configuration of a container.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_container_config(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="LXC container ID.")],
+    ) -> str:
+        """Get hardware resources, network interfaces, and settings of an LXC container.
+
+        Use when reviewing container resources, OS templates, or network settings.
 
         Args:
             node: The node name.
@@ -41,9 +61,14 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/lxc/{vmid}/config"))
 
-    @mcp.tool()
-    def get_container_pending(node: str, vmid: int) -> str:
-        """Get pending configuration changes for a container.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_container_pending(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="LXC container ID.")],
+    ) -> str:
+        """Get pending configuration changes for an LXC container (not yet applied).
+
+        Use when checking staged configuration modifications requiring container restart.
 
         Args:
             node: The node name.
@@ -51,9 +76,14 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/lxc/{vmid}/pending"))
 
-    @mcp.tool()
-    def get_container_interfaces(node: str, vmid: int) -> str:
-        """Get network interfaces and IPs of a running container.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_container_interfaces(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="LXC container ID.")],
+    ) -> str:
+        """Get assigned IP addresses (IPv4/IPv6) and MAC addresses for a running LXC container.
+
+        Use when discovering container network addresses.
 
         Args:
             node: The node name.
@@ -61,9 +91,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/lxc/{vmid}/interfaces"))
 
-    @mcp.tool()
-    def get_container_rrddata(node: str, vmid: int, timeframe: str = "hour") -> str:
-        """Get RRD statistics data for a container (CPU, memory, disk, network over time).
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_container_rrddata(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="LXC container ID.")],
+        timeframe: Annotated[str, Field(description="Time range: 'hour', 'day', 'week', 'month', or 'year'.")] = "hour",
+    ) -> str:
+        """Get RRD metrics history (CPU, memory, network I/O, disk throughput) for a container.
+
+        Use when inspecting historical performance trends of an LXC container.
 
         Args:
             node: The node name.
@@ -72,9 +108,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/lxc/{vmid}/rrddata", timeframe=timeframe))
 
-    @mcp.tool()
-    def get_container_feature(node: str, vmid: int, feature: str) -> str:
-        """Check if a feature is available for a container (snapshot, clone, copy).
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_container_feature(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="LXC container ID.")],
+        feature: Annotated[str, Field(description="Feature to query ('snapshot', 'clone', 'copy').")],
+    ) -> str:
+        """Check feature availability (snapshots, cloning) for an LXC container.
+
+        Use when testing if a container storage backend supports snapshot or clone operations.
 
         Args:
             node: The node name.
@@ -85,33 +127,39 @@ def register(mcp: FastMCP) -> None:
 
     # ── Create / Delete ───────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
     def create_container(
-        node: str,
-        vmid: int,
-        ostemplate: str,
-        hostname: str = "",
-        password: str = "",
-        ssh_public_keys: str = "",
-        storage: str = "local",
-        rootfs: str = "",
-        memory: int = 512,
-        swap: int = 512,
-        cores: int = 1,
-        cpulimit: float = 0,
-        net0: str = "",
-        nameserver: str = "",
-        searchdomain: str = "",
-        onboot: bool = False,
-        start: bool = False,
-        unprivileged: bool = True,
-        features: str = "",
-        description: str = "",
-        pool: str = "",
-        tags: str = "",
-        mp0: str = "",
+        node: Annotated[str, Field(description="Target PVE host node name.")],
+        vmid: Annotated[int, Field(description="Unique Container ID (CTID, e.g., 101).")],
+        ostemplate: Annotated[
+            str,
+            Field(description="Template volume path (e.g., 'local:vztmpl/debian-12-standard_12.2-1_amd64.tar.zst')."),
+        ],
+        hostname: Annotated[str, Field(description="Container hostname.")] = "",
+        password: Annotated[str, Field(description="Root user password.")] = "",
+        ssh_public_keys: Annotated[str, Field(description="Newline-delimited SSH public keys.")] = "",
+        storage: Annotated[str, Field(description="Target storage pool for rootfs (defaults to 'local').")] = "local",
+        rootfs: Annotated[str, Field(description="Rootfs allocation spec (e.g., 'local-lvm:8' for 8GB).")] = "",
+        memory: Annotated[int, Field(description="RAM allocation in MB (default 512).")] = 512,
+        swap: Annotated[int, Field(description="Swap space in MB (default 512).")] = 512,
+        cores: Annotated[int, Field(description="CPU core count (default 1).")] = 1,
+        cpulimit: Annotated[float, Field(description="CPU quota limit (0 = unlimited).")] = 0,
+        net0: Annotated[str, Field(description="Network interface spec (e.g., 'name=eth0,bridge=vmbr0,ip=dhcp').")] = "",
+        nameserver: Annotated[str, Field(description="DNS nameserver IP.")] = "",
+        searchdomain: Annotated[str, Field(description="DNS search domain.")] = "",
+        onboot: Annotated[bool, Field(description="If True, start container on host boot.")] = False,
+        start: Annotated[bool, Field(description="If True, boot container immediately after creation.")] = False,
+        unprivileged: Annotated[bool, Field(description="If True, create unprivileged container (recommended for security).")] = True,
+        features: Annotated[str, Field(description="Comma-separated feature flags (e.g., 'nesting=1,keyctl=1').")] = "",
+        description: Annotated[str, Field(description="Container description or notes.")] = "",
+        pool: Annotated[str, Field(description="Resource pool to assign container to.")] = "",
+        tags: Annotated[str, Field(description="Semicolon-separated tag strings.")] = "",
+        mp0: Annotated[str, Field(description="Additional mount point spec (e.g., 'local-lvm:4,mp=/mnt/data').")] = "",
     ) -> str:
-        """Create a new LXC container.
+        """Create a new LXC container from an OS template.
+
+        Use when deploying Linux container instances.
+        To delete a container, use delete_container instead.
 
         Args:
             node: The node name.
@@ -172,25 +220,27 @@ def register(mcp: FastMCP) -> None:
             params["start"] = 1
         return format_response(api_request("post", f"/nodes/{node}/lxc", **params))
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
     def update_container_config(
-        node: str,
-        vmid: int,
-        hostname: str = "",
-        memory: int = 0,
-        swap: int = -1,
-        cores: int = 0,
-        cpulimit: float = -1,
-        net0: str = "",
-        nameserver: str = "",
-        searchdomain: str = "",
-        onboot: bool | None = None,
-        description: str = "",
-        features: str = "",
-        tags: str = "",
-        delete: str = "",
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="LXC container ID.")],
+        hostname: Annotated[str, Field(description="Updated hostname.")] = "",
+        memory: Annotated[int, Field(description="RAM allocation in MB.")] = 0,
+        swap: Annotated[int, Field(description="Swap allocation in MB (-1 to leave unchanged).")] = -1,
+        cores: Annotated[int, Field(description="CPU core count.")] = 0,
+        cpulimit: Annotated[float, Field(description="CPU quota limit (-1 to leave unchanged).")] = -1,
+        net0: Annotated[str, Field(description="Network interface config.")] = "",
+        nameserver: Annotated[str, Field(description="DNS nameserver IP.")] = "",
+        searchdomain: Annotated[str, Field(description="DNS search domain.")] = "",
+        onboot: Annotated[bool | None, Field(description="Set start on host boot.")] = None,
+        description: Annotated[str, Field(description="Updated description.")] = "",
+        features: Annotated[str, Field(description="Comma-separated feature flags (e.g., 'nesting=1').")] = "",
+        tags: Annotated[str, Field(description="Semicolon-separated tags.")] = "",
+        delete: Annotated[str, Field(description="Comma-separated keys to remove from config.")] = "",
     ) -> str:
-        """Update the configuration of an existing container.
+        """Update hardware resources, network interface options, or settings of an existing container.
+
+        Use when scaling container RAM/CPU, modifying network options, or toggling nesting.
 
         Args:
             node: The node name.
@@ -234,9 +284,17 @@ def register(mcp: FastMCP) -> None:
             params["onboot"] = int(onboot)
         return format_response(api_request("put", f"/nodes/{node}/lxc/{vmid}/config", **params))
 
-    @mcp.tool()
-    def delete_container(node: str, vmid: int, purge: bool = False, destroy_unreferenced_disks: bool = True, force: bool = False) -> str:
-        """Delete a container. Must be stopped first unless force=True.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def delete_container(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="LXC container ID to destroy.")],
+        purge: Annotated[bool, Field(description="If True, remove from HA, backup schedules, and ACLs.")] = False,
+        destroy_unreferenced_disks: Annotated[bool, Field(description="If True, destroy unreferenced disks.")] = True,
+        force: Annotated[bool, Field(description="If True, force destroy even if container is running.")] = False,
+    ) -> str:
+        """Permanently delete an LXC container and purge its rootfs disk volumes.
+
+        Use when decommissioning a container instance.
 
         Args:
             node: The node name.
@@ -254,9 +312,15 @@ def register(mcp: FastMCP) -> None:
 
     # ── Power Management ──────────────────────────────────────────────
 
-    @mcp.tool()
-    def start_container(node: str, vmid: int) -> str:
-        """Start a container.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def start_container(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+    ) -> str:
+        """Power on a stopped LXC container.
+
+        Use when starting a container workload.
+        To gracefully stop a container, use shutdown_container instead.
 
         Args:
             node: The node name.
@@ -264,9 +328,14 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/status/start"))
 
-    @mcp.tool()
-    def stop_container(node: str, vmid: int) -> str:
-        """Hard-stop a container (immediate, like power off).
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=False))
+    def stop_container(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+    ) -> str:
+        """Forcefully stop an LXC container immediately (hard kill process).
+
+        Use when a container is un-responsive. Prefer shutdown_container for clean shutdown.
 
         Args:
             node: The node name.
@@ -274,9 +343,17 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/status/stop"))
 
-    @mcp.tool()
-    def shutdown_container(node: str, vmid: int, timeout: int = 0, force_stop: bool = True) -> str:
-        """Gracefully shut down a container.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def shutdown_container(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+        timeout: Annotated[int, Field(description="Timeout in seconds before force stopping (0 = default).")] = 0,
+        force_stop: Annotated[bool, Field(description="If True, force stop after timeout expires.")] = True,
+    ) -> str:
+        """Gracefully shut down an LXC container via init system.
+
+        Use for clean container shutdowns.
+        To force immediate stop, use stop_container instead.
 
         Args:
             node: The node name.
@@ -289,9 +366,15 @@ def register(mcp: FastMCP) -> None:
             params["timeout"] = timeout
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/status/shutdown", **params))
 
-    @mcp.tool()
-    def reboot_container(node: str, vmid: int, timeout: int = 0) -> str:
-        """Reboot a container.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def reboot_container(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+        timeout: Annotated[int, Field(description="Timeout in seconds for reboot process.")] = 0,
+    ) -> str:
+        """Reboot an LXC container gracefully.
+
+        Use when applying system package updates inside container.
 
         Args:
             node: The node name.
@@ -303,9 +386,15 @@ def register(mcp: FastMCP) -> None:
             params["timeout"] = timeout
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/status/reboot", **params))
 
-    @mcp.tool()
-    def suspend_container(node: str, vmid: int) -> str:
-        """Suspend (freeze) a container.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def suspend_container(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+    ) -> str:
+        """Freeze execution of a running LXC container.
+
+        Use when temporarily pausing container processes.
+        To unfreeze, use resume_container instead.
 
         Args:
             node: The node name.
@@ -313,9 +402,14 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/status/suspend"))
 
-    @mcp.tool()
-    def resume_container(node: str, vmid: int) -> str:
-        """Resume a suspended container.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def resume_container(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+    ) -> str:
+        """Unfreeze execution of a suspended LXC container.
+
+        Use when resuming a paused container.
 
         Args:
             node: The node name.
@@ -325,20 +419,22 @@ def register(mcp: FastMCP) -> None:
 
     # ── Clone / Migrate / Template ────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
     def clone_container(
-        node: str,
-        vmid: int,
-        newid: int,
-        hostname: str = "",
-        target: str = "",
-        full: bool = True,
-        storage: str = "",
-        description: str = "",
-        pool: str = "",
-        snapname: str = "",
+        node: Annotated[str, Field(description="Source PVE host node name.")],
+        vmid: Annotated[int, Field(description="Source LXC container ID.")],
+        newid: Annotated[int, Field(description="Target Container ID for the clone.")],
+        hostname: Annotated[str, Field(description="Hostname for cloned container.")] = "",
+        target: Annotated[str, Field(description="Target node for clone (defaults to same node).")] = "",
+        full: Annotated[bool, Field(description="If True, full standalone copy; if False, linked clone.")] = True,
+        storage: Annotated[str, Field(description="Target storage pool for full clone.")] = "",
+        description: Annotated[str, Field(description="Description for clone.")] = "",
+        pool: Annotated[str, Field(description="Resource pool.")] = "",
+        snapname: Annotated[str, Field(description="Snapshot name to clone from.")] = "",
     ) -> str:
-        """Clone a container.
+        """Clone an existing LXC container to create a new instance.
+
+        Use when duplicating container configurations or instantiating from container templates.
 
         Args:
             node: The source node name.
@@ -367,16 +463,18 @@ def register(mcp: FastMCP) -> None:
             params["full"] = 1
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/clone", **params))
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
     def migrate_container(
-        node: str,
-        vmid: int,
-        target: str,
-        online: bool = False,
-        restart: bool = False,
-        target_storage: str = "",
+        node: Annotated[str, Field(description="Source PVE host node name.")],
+        vmid: Annotated[int, Field(description="Container ID to migrate.")],
+        target: Annotated[str, Field(description="Target PVE host node name.")],
+        online: Annotated[bool, Field(description="If True, perform live container migration.")] = False,
+        restart: Annotated[bool, Field(description="If True, restart container on target after offline migration.")] = False,
+        target_storage: Annotated[str, Field(description="Target storage ID mapping.")] = "",
     ) -> str:
-        """Migrate a container to another node.
+        """Migrate an LXC container to another host node in the cluster.
+
+        Use when rebalancing cluster workloads or evacuating a node for maintenance.
 
         Args:
             node: The source node.
@@ -395,9 +493,14 @@ def register(mcp: FastMCP) -> None:
             params["target-storage"] = target_storage
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/migrate", **params))
 
-    @mcp.tool()
-    def convert_container_to_template(node: str, vmid: int) -> str:
-        """Convert a container into a template (irreversible).
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def convert_container_to_template(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="Container ID to convert.")],
+    ) -> str:
+        """Convert a container into a read-only golden template (irreversible).
+
+        Use when creating custom base container templates for cloning.
 
         Args:
             node: The node name.
@@ -405,9 +508,16 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/template"))
 
-    @mcp.tool()
-    def resize_container_disk(node: str, vmid: int, disk: str, size: str) -> str:
-        """Resize a container disk/volume.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def resize_container_disk(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+        disk: Annotated[str, Field(description="Disk name (e.g., 'rootfs', 'mp0').")],
+        size: Annotated[str, Field(description="New size or increment (e.g., '10G', '+2G').")],
+    ) -> str:
+        """Expand rootfs or mount point volume capacity for an LXC container.
+
+        Use when expanding container disk space. Note that disk shrinking is not supported by LXC.
 
         Args:
             node: The node name.
@@ -417,9 +527,19 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("put", f"/nodes/{node}/lxc/{vmid}/resize", disk=disk, size=size))
 
-    @mcp.tool()
-    def move_container_volume(node: str, vmid: int, volume: str, storage: str = "", target_vmid: int = 0, target_volume: str = "", delete_original: bool = False) -> str:
-        """Move a container volume to different storage or to another container.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def move_container_volume(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="Source container ID.")],
+        volume: Annotated[str, Field(description="Volume name (e.g., 'rootfs', 'mp0').")],
+        storage: Annotated[str, Field(description="Target storage ID.")] = "",
+        target_vmid: Annotated[int, Field(description="Target container ID (to attach volume to another container).")] = 0,
+        target_volume: Annotated[str, Field(description="Target volume slot on destination container.")] = "",
+        delete_original: Annotated[bool, Field(description="If True, delete original volume after moving.")] = False,
+    ) -> str:
+        """Move a container disk volume to different storage or attach to another container.
+
+        Use when relocating container rootfs to faster storage pools.
 
         Args:
             node: The node name.
@@ -443,9 +563,15 @@ def register(mcp: FastMCP) -> None:
 
     # ── Snapshots ─────────────────────────────────────────────────────
 
-    @mcp.tool()
-    def list_container_snapshots(node: str, vmid: int) -> str:
-        """List all snapshots of a container.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def list_container_snapshots(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+    ) -> str:
+        """List snapshots created for an LXC container.
+
+        Use when inspecting container snapshot trees and restore points.
+        To create a snapshot, use create_container_snapshot instead.
 
         Args:
             node: The node name.
@@ -453,9 +579,17 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/lxc/{vmid}/snapshot"))
 
-    @mcp.tool()
-    def create_container_snapshot(node: str, vmid: int, snapname: str, description: str = "") -> str:
-        """Create a snapshot of a container.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def create_container_snapshot(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+        snapname: Annotated[str, Field(description="Snapshot name (alphanumeric).")],
+        description: Annotated[str, Field(description="Snapshot notes or description.")] = "",
+    ) -> str:
+        """Create a point-in-time snapshot of an LXC container.
+
+        Use before making software changes inside container to allow rollback.
+        To revert to a snapshot, use rollback_container_snapshot.
 
         Args:
             node: The node name.
@@ -468,9 +602,16 @@ def register(mcp: FastMCP) -> None:
             params["description"] = description
         return format_response(api_request("post", f"/nodes/{node}/lxc/{vmid}/snapshot", **params))
 
-    @mcp.tool()
-    def delete_container_snapshot(node: str, vmid: int, snapname: str, force: bool = False) -> str:
-        """Delete a container snapshot.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def delete_container_snapshot(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+        snapname: Annotated[str, Field(description="Snapshot name to delete.")],
+        force: Annotated[bool, Field(description="If True, force delete snapshot.")] = False,
+    ) -> str:
+        """Delete a container snapshot file.
+
+        Use when deleting obsolete snapshot restore points.
 
         Args:
             node: The node name.
@@ -483,9 +624,17 @@ def register(mcp: FastMCP) -> None:
             params["force"] = 1
         return format_response(api_request("delete", f"/nodes/{node}/lxc/{vmid}/snapshot/{snapname}", **params))
 
-    @mcp.tool()
-    def rollback_container_snapshot(node: str, vmid: int, snapname: str) -> str:
-        """Rollback a container to a previous snapshot.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=False))
+    def rollback_container_snapshot(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="Container ID.")],
+        snapname: Annotated[str, Field(description="Snapshot name to revert container state to.")],
+    ) -> str:
+        """Revert LXC container state and rootfs content to a previous snapshot.
+
+        Use when restoring container filesystem state to a previously saved point in time.
+
+        WARNING: Current container state modifications made after the snapshot will be lost.
 
         Args:
             node: The node name.

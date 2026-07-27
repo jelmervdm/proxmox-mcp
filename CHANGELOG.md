@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] - 2026-07-27
+
+### Refactored
+- **Tool Definition Quality Score (TDQS) Optimization**: Achieved **Tier A+ (5.00 / 5.0)** across all 285 registered tool definitions in 11 modules (`access`, `backup`, `cluster`, `firewall`, `ha`, `lxc`, `nodes`, `pools`, `qemu`, `sdn`, `storage`).
+- **Behavioral Metadata**: Added FastMCP `ToolAnnotations` (`readOnlyHint`, `destructiveHint`, `idempotentHint`) to all `@mcp.tool()` decorators for enhanced safety awareness in AI client environments.
+- **Schema Parameter Documentation**: Upgraded 100% of function parameters to Pydantic `Annotated[T, Field(description=...)]` types to guarantee comprehensive metadata generation.
+- **Operational Guidelines**: Standardized tool docstrings with explicit "Use when..." context to improve LLM tool selection and prevent ambiguity.
+
 ## [1.0.3] - 2026-07-26
 
 ### Fixed

@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from proxmox_mcp.client import api_request, format_response
 
@@ -12,18 +16,29 @@ def register(mcp: FastMCP) -> None:
 
     # ── Listing & Status ──────────────────────────────────────────────
 
-    @mcp.tool()
-    def list_vms(node: str) -> str:
-        """List all QEMU virtual machines on a node with status, memory, CPU, and disk info.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def list_vms(
+        node: Annotated[str, Field(description="PVE host node name (e.g., 'pve1').")],
+    ) -> str:
+        """List all QEMU virtual machines on a node with status, memory, CPU, and disk metrics.
+
+        Use when inspecting active or stopped VMs on a host.
+        To view detailed configuration for a specific VM, use get_vm_config instead.
 
         Args:
             node: The node name.
         """
         return format_response(api_request("get", f"/nodes/{node}/qemu"))
 
-    @mcp.tool()
-    def get_vm_status(node: str, vmid: int) -> str:
-        """Get the current runtime status of a VM (state, CPU, memory, disk, network, uptime).
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_vm_status(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID (e.g., 100).")],
+    ) -> str:
+        """Get current runtime status (state, CPU utilization, RAM usage, disk I/O, network stats, uptime) of a VM.
+
+        Use when checking live operational metrics of a VM.
+        To list all VMs on a node, use list_vms instead.
 
         Args:
             node: The node name.
@@ -31,9 +46,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/qemu/{vmid}/status/current"))
 
-    @mcp.tool()
-    def get_vm_config(node: str, vmid: int, current: bool = True) -> str:
-        """Get the configuration of a VM.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_vm_config(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        current: Annotated[bool, Field(description="If True, return runtime active config. If False, return pending config.")] = True,
+    ) -> str:
+        """Get hardware resources, network devices, disk attachments, and settings of a VM.
+
+        Use when reviewing VM hardware, ISO images, or network settings.
 
         Args:
             node: The node name.
@@ -43,9 +64,14 @@ def register(mcp: FastMCP) -> None:
         params: dict = {"current": int(current)}
         return format_response(api_request("get", f"/nodes/{node}/qemu/{vmid}/config", **params))
 
-    @mcp.tool()
-    def get_vm_pending(node: str, vmid: int) -> str:
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_vm_pending(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+    ) -> str:
         """Get pending configuration changes for a VM (not yet applied).
+
+        Use when checking staged hardware or resource modifications requiring VM reboot.
 
         Args:
             node: The node name.
@@ -53,9 +79,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/qemu/{vmid}/pending"))
 
-    @mcp.tool()
-    def get_vm_feature(node: str, vmid: int, feature: str) -> str:
-        """Check if a specific feature is available/supported for a VM (e.g. snapshot, clone, copy).
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_vm_feature(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        feature: Annotated[str, Field(description="Feature to query ('snapshot', 'clone', 'copy').")],
+    ) -> str:
+        """Check feature availability (snapshots, cloning) for a QEMU VM.
+
+        Use when testing if storage backends support snapshotting or cloning operations for a VM.
 
         Args:
             node: The node name.
@@ -64,9 +96,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/qemu/{vmid}/feature", feature=feature))
 
-    @mcp.tool()
-    def get_vm_rrddata(node: str, vmid: int, timeframe: str = "hour") -> str:
-        """Get RRD statistics data for a VM (CPU, memory, disk, network over time).
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_vm_rrddata(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        timeframe: Annotated[str, Field(description="Time range: 'hour', 'day', 'week', 'month', or 'year'.")] = "hour",
+    ) -> str:
+        """Get RRD metrics history (CPU, memory, disk throughput, network I/O) for a VM.
+
+        Use when inspecting historical performance trends of a VM.
 
         Args:
             node: The node name.
@@ -77,32 +115,35 @@ def register(mcp: FastMCP) -> None:
 
     # ── Create / Delete ───────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
     def create_vm(
-        node: str,
-        vmid: int,
-        name: str = "",
-        memory: int = 2048,
-        cores: int = 1,
-        sockets: int = 1,
-        cpu: str = "host",
-        ostype: str = "l26",
-        scsihw: str = "virtio-scsi-single",
-        scsi0: str = "",
-        ide2: str = "",
-        net0: str = "",
-        boot: str = "",
-        bios: str = "seabios",
-        machine: str = "",
-        cdrom: str = "",
-        agent: str = "",
-        start: bool = False,
-        onboot: bool = False,
-        description: str = "",
-        pool: str = "",
-        tags: str = "",
+        node: Annotated[str, Field(description="Target PVE host node name.")],
+        vmid: Annotated[int, Field(description="Unique VM ID (e.g., 100).")],
+        name: Annotated[str, Field(description="VM name.")] = "",
+        memory: Annotated[int, Field(description="RAM allocation in MB (default 2048).")] = 2048,
+        cores: Annotated[int, Field(description="CPU core count per socket (default 1).")] = 1,
+        sockets: Annotated[int, Field(description="CPU socket count (default 1).")] = 1,
+        cpu: Annotated[str, Field(description="CPU architecture/emulation type (default 'host').")] = "host",
+        ostype: Annotated[str, Field(description="OS type ('l26' for Linux 2.6+, 'win10', 'win11', 'other').")] = "l26",
+        scsihw: Annotated[str, Field(description="SCSI controller hardware ('virtio-scsi-single', 'virtio-scsi-pci', 'lsi').")] = "virtio-scsi-single",
+        scsi0: Annotated[str, Field(description="First SCSI disk allocation spec (e.g., 'local-lvm:32' for 32GB).")] = "",
+        ide2: Annotated[str, Field(description="IDE device spec, often CD-ROM (e.g., 'local:iso/ubuntu.iso,media=cdrom').")] = "",
+        net0: Annotated[str, Field(description="Network device spec (e.g., 'virtio,bridge=vmbr0').")] = "",
+        boot: Annotated[str, Field(description="Boot order specification (e.g., 'order=scsi0;ide2').")] = "",
+        bios: Annotated[str, Field(description="BIOS type ('seabios' or 'ovmf' for UEFI).")] = "seabios",
+        machine: Annotated[str, Field(description="QEMU machine model (e.g., 'q35', 'i440fx').")] = "",
+        cdrom: Annotated[str, Field(description="CD-ROM ISO file path.")] = "",
+        agent: Annotated[str, Field(description="QEMU guest agent enable string (e.g., 'enabled=1').")] = "",
+        start: Annotated[bool, Field(description="If True, boot VM immediately after creation.")] = False,
+        onboot: Annotated[bool, Field(description="If True, start VM on host system boot.")] = False,
+        description: Annotated[str, Field(description="VM description or notes.")] = "",
+        pool: Annotated[str, Field(description="Resource pool to assign VM to.")] = "",
+        tags: Annotated[str, Field(description="Semicolon-separated tag strings.")] = "",
     ) -> str:
-        """Create a new QEMU virtual machine.
+        """Create a new QEMU virtual machine instance.
+
+        Use when deploying new virtual machine workloads.
+        To delete a VM, use delete_vm instead.
 
         Args:
             node: The node name.
@@ -159,25 +200,27 @@ def register(mcp: FastMCP) -> None:
             params["onboot"] = 1
         return format_response(api_request("post", f"/nodes/{node}/qemu", **params))
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
     def update_vm_config(
-        node: str,
-        vmid: int,
-        name: str = "",
-        memory: int = 0,
-        cores: int = 0,
-        sockets: int = 0,
-        cpu: str = "",
-        net0: str = "",
-        description: str = "",
-        onboot: bool | None = None,
-        agent: str = "",
-        boot: str = "",
-        tags: str = "",
-        hotplug: str = "",
-        delete: str = "",
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        name: Annotated[str, Field(description="Updated VM name.")] = "",
+        memory: Annotated[int, Field(description="RAM allocation in MB.")] = 0,
+        cores: Annotated[int, Field(description="CPU core count per socket.")] = 0,
+        sockets: Annotated[int, Field(description="CPU socket count.")] = 0,
+        cpu: Annotated[str, Field(description="CPU type.")] = "",
+        net0: Annotated[str, Field(description="Network device spec.")] = "",
+        description: Annotated[str, Field(description="Updated description.")] = "",
+        onboot: Annotated[bool | None, Field(description="Set start on host boot.")] = None,
+        agent: Annotated[str, Field(description="Guest agent config.")] = "",
+        boot: Annotated[str, Field(description="Boot order spec.")] = "",
+        tags: Annotated[str, Field(description="Semicolon-separated tags.")] = "",
+        hotplug: Annotated[str, Field(description="Hotplug features ('disk,network,usb,memory,cpu').")] = "",
+        delete: Annotated[str, Field(description="Comma-separated settings to delete.")] = "",
     ) -> str:
-        """Update the configuration of an existing VM. Only provided parameters are changed.
+        """Update hardware resources, network interfaces, or boot order for an existing VM.
+
+        Use when adjusting VM memory, CPU allocation, network settings, or tags.
 
         Args:
             node: The node name.
@@ -220,9 +263,16 @@ def register(mcp: FastMCP) -> None:
             params["onboot"] = int(onboot)
         return format_response(api_request("put", f"/nodes/{node}/qemu/{vmid}/config", **params))
 
-    @mcp.tool()
-    def delete_vm(node: str, vmid: int, purge: bool = False, destroy_unreferenced_disks: bool = True) -> str:
-        """Delete a VM. The VM must be stopped first.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def delete_vm(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID to destroy.")],
+        purge: Annotated[bool, Field(description="If True, remove from HA, backup jobs, and ACLs.")] = False,
+        destroy_unreferenced_disks: Annotated[bool, Field(description="If True, destroy unreferenced disks.")] = True,
+    ) -> str:
+        """Permanently delete a QEMU virtual machine and destroy associated virtual disk images.
+
+        Use when decommissioning a virtual machine. VM must be stopped prior to deletion.
 
         Args:
             node: The node name.
@@ -237,9 +287,16 @@ def register(mcp: FastMCP) -> None:
 
     # ── Power Management ──────────────────────────────────────────────
 
-    @mcp.tool()
-    def start_vm(node: str, vmid: int, timeout: int = 0) -> str:
-        """Start a VM.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def start_vm(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        timeout: Annotated[int, Field(description="Timeout in seconds (0 = default).")] = 0,
+    ) -> str:
+        """Power on a stopped QEMU virtual machine.
+
+        Use when booting a VM.
+        To gracefully stop a VM, use shutdown_vm instead.
 
         Args:
             node: The node name.
@@ -251,9 +308,16 @@ def register(mcp: FastMCP) -> None:
             params["timeout"] = timeout
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/status/start", **params))
 
-    @mcp.tool()
-    def stop_vm(node: str, vmid: int, timeout: int = 0, skiplock: bool = False) -> str:
-        """Hard-stop a VM (like pulling the power plug). Prefer shutdown_vm for graceful stop.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=False))
+    def stop_vm(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        timeout: Annotated[int, Field(description="Wait timeout in seconds.")] = 0,
+        skiplock: Annotated[bool, Field(description="If True, ignore locks (requires root).")] = False,
+    ) -> str:
+        """Forcefully stop a QEMU VM immediately (hard power kill).
+
+        Use when a VM is unresponsive to shutdown signals. Prefer shutdown_vm for clean OS shutdown.
 
         Args:
             node: The node name.
@@ -268,9 +332,17 @@ def register(mcp: FastMCP) -> None:
             params["skiplock"] = 1
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/status/stop", **params))
 
-    @mcp.tool()
-    def shutdown_vm(node: str, vmid: int, timeout: int = 0, force_stop: bool = True) -> str:
-        """Gracefully shut down a VM via ACPI. Falls back to hard stop after timeout if force_stop is true.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def shutdown_vm(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        timeout: Annotated[int, Field(description="Timeout in seconds before force stop.")] = 0,
+        force_stop: Annotated[bool, Field(description="If True, force stop after timeout expires.")] = True,
+    ) -> str:
+        """Gracefully shut down a QEMU VM via ACPI signal or QEMU Guest Agent.
+
+        Use for clean VM OS shutdowns.
+        To force immediate power-off, use stop_vm instead.
 
         Args:
             node: The node name.
@@ -283,9 +355,15 @@ def register(mcp: FastMCP) -> None:
             params["timeout"] = timeout
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/status/shutdown", **params))
 
-    @mcp.tool()
-    def reboot_vm(node: str, vmid: int, timeout: int = 0) -> str:
-        """Reboot a VM via ACPI.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def reboot_vm(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        timeout: Annotated[int, Field(description="Wait timeout in seconds.")] = 0,
+    ) -> str:
+        """Reboot a QEMU VM gracefully via ACPI.
+
+        Use when restarting a VM OS.
 
         Args:
             node: The node name.
@@ -297,9 +375,16 @@ def register(mcp: FastMCP) -> None:
             params["timeout"] = timeout
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/status/reboot", **params))
 
-    @mcp.tool()
-    def suspend_vm(node: str, vmid: int, todisk: bool = False) -> str:
-        """Suspend a VM (pause execution or hibernate to disk).
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def suspend_vm(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        todisk: Annotated[bool, Field(description="If True, hibernate RAM to disk; if False, pause execution in RAM.")] = False,
+    ) -> str:
+        """Pause VM execution in RAM or save state to disk (hibernate).
+
+        Use when pausing VM workloads.
+        To resume execution, use resume_vm.
 
         Args:
             node: The node name.
@@ -311,9 +396,14 @@ def register(mcp: FastMCP) -> None:
             params["todisk"] = 1
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/status/suspend", **params))
 
-    @mcp.tool()
-    def resume_vm(node: str, vmid: int) -> str:
-        """Resume a suspended/paused VM.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def resume_vm(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+    ) -> str:
+        """Resume execution of a suspended or paused QEMU VM.
+
+        Use when restoring execution of a paused VM.
 
         Args:
             node: The node name.
@@ -321,9 +411,14 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/status/resume"))
 
-    @mcp.tool()
-    def reset_vm(node: str, vmid: int) -> str:
-        """Hard reset a VM (like pressing the reset button).
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=False))
+    def reset_vm(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+    ) -> str:
+        """Hard reset a QEMU VM (equivalent to physical hardware reset button).
+
+        Use when a VM guest kernel is hard locked.
 
         Args:
             node: The node name.
@@ -333,20 +428,22 @@ def register(mcp: FastMCP) -> None:
 
     # ── Clone / Migrate / Template ────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
     def clone_vm(
-        node: str,
-        vmid: int,
-        newid: int,
-        name: str = "",
-        target: str = "",
-        full: bool = True,
-        storage: str = "",
-        description: str = "",
-        pool: str = "",
-        snapname: str = "",
+        node: Annotated[str, Field(description="Source PVE host node name.")],
+        vmid: Annotated[int, Field(description="Source QEMU VM ID.")],
+        newid: Annotated[int, Field(description="Target VM ID for the clone.")],
+        name: Annotated[str, Field(description="Name for the cloned VM.")] = "",
+        target: Annotated[str, Field(description="Target node for clone (defaults to same node).")] = "",
+        full: Annotated[bool, Field(description="If True, full standalone copy; if False, linked clone.")] = True,
+        storage: Annotated[str, Field(description="Target storage pool for full clone.")] = "",
+        description: Annotated[str, Field(description="Description for clone.")] = "",
+        pool: Annotated[str, Field(description="Resource pool.")] = "",
+        snapname: Annotated[str, Field(description="Snapshot name to clone from.")] = "",
     ) -> str:
-        """Clone a VM to create a new one. Can be a full copy or linked clone.
+        """Clone a QEMU virtual machine to create a new VM instance.
+
+        Use when duplicating VM configurations or instantiating from golden templates.
 
         Args:
             node: The source node name.
@@ -377,16 +474,18 @@ def register(mcp: FastMCP) -> None:
             params["snapname"] = snapname
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/clone", **params))
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
     def migrate_vm(
-        node: str,
-        vmid: int,
-        target: str,
-        online: bool = False,
-        with_local_disks: bool = False,
-        targetstorage: str = "",
+        node: Annotated[str, Field(description="Source PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID to migrate.")],
+        target: Annotated[str, Field(description="Target PVE host node name.")],
+        online: Annotated[bool, Field(description="If True, perform live VM migration without downtime.")] = False,
+        with_local_disks: Annotated[bool, Field(description="If True, migrate local non-shared disk storage.")] = False,
+        targetstorage: Annotated[str, Field(description="Target storage ID mapping.")] = "",
     ) -> str:
-        """Migrate a VM to another node in the cluster.
+        """Migrate a QEMU VM to another host node in the cluster.
+
+        Use when rebalancing cluster compute load or clearing a host node for maintenance.
 
         Args:
             node: The source node.
@@ -405,9 +504,14 @@ def register(mcp: FastMCP) -> None:
             params["targetstorage"] = targetstorage
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/migrate", **params))
 
-    @mcp.tool()
-    def convert_vm_to_template(node: str, vmid: int) -> str:
-        """Convert a VM into a template (irreversible).
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def convert_vm_to_template(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID to convert.")],
+    ) -> str:
+        """Convert a QEMU VM into a read-only golden template (irreversible).
+
+        Use when creating custom base VM templates for linked/full cloning.
 
         Args:
             node: The node name.
@@ -415,9 +519,16 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/template"))
 
-    @mcp.tool()
-    def resize_vm_disk(node: str, vmid: int, disk: str, size: str) -> str:
-        """Resize a VM disk. Can only grow, not shrink.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def resize_vm_disk(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        disk: Annotated[str, Field(description="Disk drive identifier (e.g., 'scsi0', 'virtio0').")],
+        size: Annotated[str, Field(description="New size or increment (e.g., '50G', '+10G').")],
+    ) -> str:
+        """Expand disk capacity for a QEMU VM disk drive.
+
+        Use when increasing VM storage capacity. Note that shrinking disks is not supported by QEMU.
 
         Args:
             node: The node name.
@@ -427,9 +538,19 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("put", f"/nodes/{node}/qemu/{vmid}/resize", disk=disk, size=size))
 
-    @mcp.tool()
-    def move_vm_disk(node: str, vmid: int, disk: str, storage: str = "", target_vmid: int = 0, target_disk: str = "", delete_original: bool = False) -> str:
-        """Move a VM disk to different storage or attach to another VM.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def move_vm_disk(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="Source QEMU VM ID.")],
+        disk: Annotated[str, Field(description="Disk identifier (e.g., 'scsi0').")],
+        storage: Annotated[str, Field(description="Target storage ID for relocation.")] = "",
+        target_vmid: Annotated[int, Field(description="Target VM ID (to reattach disk to another VM).")] = 0,
+        target_disk: Annotated[str, Field(description="Target disk drive slot on destination VM.")] = "",
+        delete_original: Annotated[bool, Field(description="If True, remove original disk image after copy.")] = False,
+    ) -> str:
+        """Move a VM virtual disk to different storage or attach it to another VM.
+
+        Use when migrating VM disks between storage pools.
 
         Args:
             node: The node name.
@@ -453,9 +574,15 @@ def register(mcp: FastMCP) -> None:
 
     # ── Snapshots ─────────────────────────────────────────────────────
 
-    @mcp.tool()
-    def list_vm_snapshots(node: str, vmid: int) -> str:
-        """List all snapshots of a VM.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def list_vm_snapshots(
+        node: Annotated[str, Field(description="PVE node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+    ) -> str:
+        """List snapshots created for a QEMU VM.
+
+        Use when inspecting VM restore points and snapshot trees.
+        To create a snapshot, use create_vm_snapshot.
 
         Args:
             node: The node name.
@@ -463,9 +590,18 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/qemu/{vmid}/snapshot"))
 
-    @mcp.tool()
-    def create_vm_snapshot(node: str, vmid: int, snapname: str, description: str = "", vmstate: bool = False) -> str:
-        """Create a snapshot of a VM.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def create_vm_snapshot(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        snapname: Annotated[str, Field(description="Snapshot identifier name.")],
+        description: Annotated[str, Field(description="Snapshot description or notes.")] = "",
+        vmstate: Annotated[bool, Field(description="If True, include active RAM state for running VMs.")] = False,
+    ) -> str:
+        """Create a point-in-time snapshot of a QEMU virtual machine.
+
+        Use prior to OS or application upgrades to enable quick recovery.
+        To revert to a snapshot, use rollback_vm_snapshot.
 
         Args:
             node: The node name.
@@ -481,9 +617,16 @@ def register(mcp: FastMCP) -> None:
             params["vmstate"] = 1
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/snapshot", **params))
 
-    @mcp.tool()
-    def delete_vm_snapshot(node: str, vmid: int, snapname: str, force: bool = False) -> str:
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def delete_vm_snapshot(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        snapname: Annotated[str, Field(description="Snapshot name to delete.")],
+        force: Annotated[bool, Field(description="If True, force delete snapshot.")] = False,
+    ) -> str:
         """Delete a VM snapshot.
+
+        Use when deleting obsolete restore points.
 
         Args:
             node: The node name.
@@ -496,9 +639,17 @@ def register(mcp: FastMCP) -> None:
             params["force"] = 1
         return format_response(api_request("delete", f"/nodes/{node}/qemu/{vmid}/snapshot/{snapname}", **params))
 
-    @mcp.tool()
-    def rollback_vm_snapshot(node: str, vmid: int, snapname: str) -> str:
-        """Rollback a VM to a previous snapshot (current state will be lost).
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=False))
+    def rollback_vm_snapshot(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        snapname: Annotated[str, Field(description="Snapshot name to revert VM state to.")],
+    ) -> str:
+        """Revert QEMU VM hardware configuration and disk contents to a previous snapshot state.
+
+        Use when restoring VM virtual disk and configuration state to a saved point in time.
+
+        WARNING: Unsaved changes made after the snapshot will be lost.
 
         Args:
             node: The node name.
@@ -507,9 +658,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/snapshot/{snapname}/rollback"))
 
-    @mcp.tool()
-    def get_vm_snapshot_config(node: str, vmid: int, snapname: str) -> str:
-        """Get the configuration stored in a VM snapshot.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_vm_snapshot_config(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        snapname: Annotated[str, Field(description="Snapshot name.")],
+    ) -> str:
+        """Get the stored VM hardware configuration associated with a snapshot.
+
+        Use when reviewing hardware settings saved in a historical snapshot.
 
         Args:
             node: The node name.
@@ -520,9 +677,14 @@ def register(mcp: FastMCP) -> None:
 
     # ── Cloud-Init ────────────────────────────────────────────────────
 
-    @mcp.tool()
-    def get_vm_cloudinit(node: str, vmid: int) -> str:
-        """Get Cloud-Init configuration for a VM.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_vm_cloudinit(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+    ) -> str:
+        """Get Cloud-Init settings (user, SSH keys, IP config) configured on a VM.
+
+        Use when auditing Cloud-Init provisioning settings.
 
         Args:
             node: The node name.
@@ -530,18 +692,20 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/qemu/{vmid}/cloudinit"))
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
     def update_vm_cloudinit(
-        node: str,
-        vmid: int,
-        ciuser: str = "",
-        cipassword: str = "",
-        sshkeys: str = "",
-        ipconfig0: str = "",
-        nameserver: str = "",
-        searchdomain: str = "",
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        ciuser: Annotated[str, Field(description="Cloud-Init username.")] = "",
+        cipassword: Annotated[str, Field(description="Cloud-Init password.")] = "",
+        sshkeys: Annotated[str, Field(description="Newline-delimited SSH public keys.")] = "",
+        ipconfig0: Annotated[str, Field(description="IP config for net0 (e.g., 'ip=dhcp' or 'ip=10.0.0.5/24,gw=10.0.0.1').")] = "",
+        nameserver: Annotated[str, Field(description="DNS nameserver IP.")] = "",
+        searchdomain: Annotated[str, Field(description="DNS search domain.")] = "",
     ) -> str:
-        """Set Cloud-Init parameters for a VM (user, password, SSH keys, network).
+        """Configure Cloud-Init automation parameters (default user, SSH keys, static IP addresses, DNS).
+
+        Use when customizing automated cloud image initialization.
 
         Args:
             node: The node name.
@@ -566,9 +730,15 @@ def register(mcp: FastMCP) -> None:
                 params[key] = val
         return format_response(api_request("put", f"/nodes/{node}/qemu/{vmid}/cloudinit", **params))
 
-    @mcp.tool()
-    def dump_vm_cloudinit(node: str, vmid: int, type: str = "user") -> str:
-        """Dump the Cloud-Init generated config file (user-data, network-data, or meta-data).
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def dump_vm_cloudinit(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        type: Annotated[str, Field(description="Cloud-Init payload section to inspect ('user', 'network', 'meta').")] = "user",
+    ) -> str:
+        """Dump generated Cloud-Init ISO metadata (user-data, network-data, or meta-data).
+
+        Use when inspecting rendered Cloud-Init configuration files.
 
         Args:
             node: The node name.
@@ -579,9 +749,16 @@ def register(mcp: FastMCP) -> None:
 
     # ── QEMU Guest Agent ──────────────────────────────────────────────
 
-    @mcp.tool()
-    def vm_agent_exec(node: str, vmid: int, command: str, input_data: str = "") -> str:
-        """Execute a command inside a VM via the QEMU Guest Agent.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def vm_agent_exec(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        command: Annotated[str, Field(description="Command binary path or executable command line string.")],
+        input_data: Annotated[str, Field(description="Data string to pass to command stdin.")] = "",
+    ) -> str:
+        """Execute an arbitrary command inside a running VM via QEMU Guest Agent.
+
+        Use when running guest OS commands without SSH connection.
 
         Args:
             node: The node name.
@@ -594,9 +771,15 @@ def register(mcp: FastMCP) -> None:
             params["input-data"] = input_data
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/agent/exec", **params))
 
-    @mcp.tool()
-    def vm_agent_exec_status(node: str, vmid: int, pid: int) -> str:
-        """Get the status/result of a command previously executed via the guest agent.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def vm_agent_exec_status(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        pid: Annotated[int, Field(description="PID integer returned from vm_agent_exec.")],
+    ) -> str:
+        """Get exit status, stdout, and stderr for a command previously executed via QEMU Guest Agent.
+
+        Use when polling completion status of guest agent commands.
 
         Args:
             node: The node name.
@@ -605,9 +788,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/qemu/{vmid}/agent/exec-status", pid=pid))
 
-    @mcp.tool()
-    def vm_agent_file_read(node: str, vmid: int, file: str) -> str:
-        """Read a file from inside a VM via the guest agent.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def vm_agent_file_read(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        file: Annotated[str, Field(description="Absolute file path inside guest VM.")],
+    ) -> str:
+        """Read text contents of a file inside a VM via QEMU Guest Agent.
+
+        Use when inspecting configuration or log files inside guest VM.
 
         Args:
             node: The node name.
@@ -616,9 +805,16 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("get", f"/nodes/{node}/qemu/{vmid}/agent/file-read", file=file))
 
-    @mcp.tool()
-    def vm_agent_file_write(node: str, vmid: int, file: str, content: str) -> str:
-        """Write content to a file inside a VM via the guest agent.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
+    def vm_agent_file_write(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        file: Annotated[str, Field(description="Absolute destination file path inside guest VM.")],
+        content: Annotated[str, Field(description="Text content to write to file.")],
+    ) -> str:
+        """Write content to a file inside a VM via QEMU Guest Agent.
+
+        Use when injecting configuration files into running VMs.
 
         Args:
             node: The node name.
@@ -628,23 +824,37 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/agent/file-write", file=file, content=content))
 
-    @mcp.tool()
-    def vm_agent_get_info(node: str, vmid: int, info_type: str = "get-osinfo") -> str:
-        """Get various system information from a VM via the guest agent.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def vm_agent_get_info(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        info_type: Annotated[
+            str,
+            Field(description="Information metric to retrieve ('get-osinfo', 'get-host-name', 'get-time', 'get-timezone', 'get-users', 'get-vcpus', 'get-fsinfo', 'network-get-interfaces')."),
+        ] = "get-osinfo",
+    ) -> str:
+        """Get guest OS information (network interfaces, IP addresses, OS version, mounted filesystems) via QEMU Agent.
+
+        Use when inspecting operational details inside guest VM.
 
         Args:
             node: The node name.
             vmid: The VM ID.
-            info_type: Info to retrieve: 'get-osinfo', 'get-host-name', 'get-time',
-                       'get-timezone', 'get-users', 'get-vcpus', 'get-fsinfo',
-                       'get-memory-blocks', 'get-memory-block-info', 'info',
-                       'network-get-interfaces'.
+            info_type: Info to retrieve: 'get-osinfo', 'get-host-name', 'get-time', 'get-timezone', 'get-users', 'get-vcpus', 'get-fsinfo', 'network-get-interfaces'.
         """
         return format_response(api_request("get", f"/nodes/{node}/qemu/{vmid}/agent/{info_type}"))
 
-    @mcp.tool()
-    def vm_agent_set_password(node: str, vmid: int, username: str, password: str, crypted: bool = False) -> str:
-        """Set a user password inside a VM via the guest agent.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
+    def vm_agent_set_password(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        username: Annotated[str, Field(description="Target user account inside guest OS.")],
+        password: Annotated[str, Field(description="New password string.")],
+        crypted: Annotated[bool, Field(description="If True, password string is already crypted.")] = False,
+    ) -> str:
+        """Reset user account password inside a VM via QEMU Guest Agent.
+
+        Use when setting or resetting user passwords in VM guest OS.
 
         Args:
             node: The node name.
@@ -660,9 +870,15 @@ def register(mcp: FastMCP) -> None:
 
     # ── Console Access ────────────────────────────────────────────────
 
-    @mcp.tool()
-    def get_vm_vncproxy(node: str, vmid: int, websocket: bool = True) -> str:
-        """Create a VNC proxy connection ticket for a VM (for console access).
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_vm_vncproxy(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        websocket: Annotated[bool, Field(description="If True, prepare WebSocket proxy connection.")] = True,
+    ) -> str:
+        """Create a VNC proxy connection ticket and port for remote graphical console access.
+
+        Use when establishing web VNC sessions to a VM.
 
         Args:
             node: The node name.
@@ -671,9 +887,14 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/vncproxy", websocket=int(websocket)))
 
-    @mcp.tool()
-    def get_vm_spiceproxy(node: str, vmid: int) -> str:
-        """Create a SPICE proxy connection for a VM console.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_vm_spiceproxy(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+    ) -> str:
+        """Create a SPICE proxy connection configuration for high-performance remote desktop access.
+
+        Use when opening SPICE console sessions to a VM.
 
         Args:
             node: The node name.
@@ -681,9 +902,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/spiceproxy"))
 
-    @mcp.tool()
-    def send_vm_key(node: str, vmid: int, key: str) -> str:
-        """Send a key event to a VM (e.g. ctrl-alt-del).
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def send_vm_key(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        key: Annotated[str, Field(description="Key event sequence string (e.g., 'ctrl-alt-delete').")],
+    ) -> str:
+        """Send virtual key stroke events (e.g., Ctrl+Alt+Del) directly to a VM console.
+
+        Use when sending key events to guest virtual machine input console.
 
         Args:
             node: The node name.
@@ -692,9 +919,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("put", f"/nodes/{node}/qemu/{vmid}/sendkey", key=key))
 
-    @mcp.tool()
-    def send_vm_monitor_command(node: str, vmid: int, command: str) -> str:
-        """Send a QEMU monitor command to a VM (advanced/low-level).
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def send_vm_monitor_command(
+        node: Annotated[str, Field(description="PVE host node name.")],
+        vmid: Annotated[int, Field(description="QEMU VM ID.")],
+        command: Annotated[str, Field(description="QEMU monitor command string (e.g., 'info block').")],
+    ) -> str:
+        """Send raw QEMU HMP/QMP monitor command string directly to hypervisor instance.
+
+        Use for low-level QEMU hypervisor debugging and inspection.
 
         Args:
             node: The node name.

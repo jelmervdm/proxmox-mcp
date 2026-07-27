@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from proxmox_mcp.client import api_request, format_response
 
@@ -10,42 +14,61 @@ from proxmox_mcp.client import api_request, format_response
 def register(mcp: FastMCP) -> None:
     """Register HA management tools."""
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def get_ha_status() -> str:
-        """Get HA manager status (active, quorum, manager status)."""
+        """Get High Availability manager status, quorum state, and active master node.
+
+        Use when monitoring HA service state and cluster quorum status.
+        To view detailed manager state details, use get_ha_manager_status instead.
+        """
         return format_response(api_request("get", "/cluster/ha/status"))
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def get_ha_manager_status() -> str:
-        """Get detailed HA manager status."""
+        """Get detailed HA CRM and LRM daemon status and state machine details.
+
+        Use when troubleshooting HA failover locks, fencing, or node election issues.
+        """
         return format_response(api_request("get", "/cluster/ha/status/manager_status"))
 
     # ── HA Resources ──────────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def list_ha_resources() -> str:
-        """List all HA-managed resources."""
+        """List all VMs and LXC containers managed under High Availability.
+
+        Use when inspecting HA protection status for virtual machines and containers.
+        To inspect configuration for a specific HA resource, use get_ha_resource instead.
+        """
         return format_response(api_request("get", "/cluster/ha/resources"))
 
-    @mcp.tool()
-    def get_ha_resource(sid: str) -> str:
-        """Get HA resource configuration.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_ha_resource(
+        sid: Annotated[str, Field(description="HA resource identifier formatted as 'type:vmid' (e.g., 'vm:100' or 'ct:101').")],
+    ) -> str:
+        """Get HA resource state, group assignment, restart limits, and relocation policies.
+
+        Use when inspecting failover configuration for a single protected VM or container.
+        To list all HA resources, use list_ha_resources instead.
 
         Args:
             sid: HA resource ID (format: 'type:vmid', e.g. 'vm:100' or 'ct:101').
         """
         return format_response(api_request("get", f"/cluster/ha/resources/{sid}"))
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
     def create_ha_resource(
-        sid: str,
-        group: str = "",
-        max_relocate: int = 1,
-        max_restart: int = 1,
-        state: str = "started",
-        comment: str = "",
+        sid: Annotated[str, Field(description="Resource ID formatted as 'type:vmid' (e.g., 'vm:100' or 'ct:101').")],
+        group: Annotated[str, Field(description="Optional HA group identifier to assign resource to.")] = "",
+        max_relocate: Annotated[int, Field(description="Maximum number of automatic relocation attempts on failure.")] = 1,
+        max_restart: Annotated[int, Field(description="Maximum number of automatic restart attempts on failure.")] = 1,
+        state: Annotated[str, Field(description="Target HA state: 'started', 'stopped', 'enabled', 'disabled', or 'ignored'.")] = "started",
+        comment: Annotated[str, Field(description="Optional description or note for the HA resource.")] = "",
     ) -> str:
-        """Add a resource to HA management.
+        """Add a virtual machine or container to Proxmox High Availability protection.
+
+        Use when configuring failover protection for a VM or LXC container.
+        To remove HA management from a resource, use delete_ha_resource.
 
         Args:
             sid: Resource ID (format: 'type:vmid', e.g. 'vm:100' or 'ct:101').
@@ -62,17 +85,19 @@ def register(mcp: FastMCP) -> None:
             params["comment"] = comment
         return format_response(api_request("post", "/cluster/ha/resources", **params))
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
     def update_ha_resource(
-        sid: str,
-        group: str = "",
-        max_relocate: int = -1,
-        max_restart: int = -1,
-        state: str = "",
-        comment: str = "",
-        delete: str = "",
+        sid: Annotated[str, Field(description="Target HA resource identifier ('type:vmid').")],
+        group: Annotated[str, Field(description="New HA group identifier assignment.")] = "",
+        max_relocate: Annotated[int, Field(description="Max relocate attempts (-1 to leave unchanged).")] = -1,
+        max_restart: Annotated[int, Field(description="Max restart attempts (-1 to leave unchanged).")] = -1,
+        state: Annotated[str, Field(description="Updated target HA state ('started', 'stopped', 'disabled', etc.).")] = "",
+        comment: Annotated[str, Field(description="Updated comment or description.")] = "",
+        delete: Annotated[str, Field(description="Comma-separated properties to remove from config.")] = "",
     ) -> str:
-        """Update an HA resource configuration.
+        """Update High Availability settings for a managed VM or container.
+
+        Use when changing target states, failover policies, or group assignments.
 
         Args:
             sid: Resource ID.
@@ -98,18 +123,28 @@ def register(mcp: FastMCP) -> None:
             params["delete"] = delete
         return format_response(api_request("put", f"/cluster/ha/resources/{sid}", **params))
 
-    @mcp.tool()
-    def delete_ha_resource(sid: str) -> str:
-        """Remove a resource from HA management.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def delete_ha_resource(
+        sid: Annotated[str, Field(description="HA resource ID ('type:vmid') to remove from HA management.")],
+    ) -> str:
+        """Remove High Availability management from a VM or container.
+
+        Use when disabling automatic HA failover monitoring for a resource without deleting the underlying VM.
 
         Args:
             sid: Resource ID (format: 'type:vmid').
         """
         return format_response(api_request("delete", f"/cluster/ha/resources/{sid}"))
 
-    @mcp.tool()
-    def migrate_ha_resource(sid: str, node: str) -> str:
-        """Request migration of an HA resource to a different node.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def migrate_ha_resource(
+        sid: Annotated[str, Field(description="HA resource ID ('type:vmid').")],
+        node: Annotated[str, Field(description="Target host node for live migration.")],
+    ) -> str:
+        """Request live migration of an HA-managed resource to a target node.
+
+        Use when triggering controlled live migration of protected VMs across cluster nodes.
+        To perform non-live node relocation, use relocate_ha_resource instead.
 
         Args:
             sid: Resource ID.
@@ -117,9 +152,15 @@ def register(mcp: FastMCP) -> None:
         """
         return format_response(api_request("post", f"/cluster/ha/resources/{sid}/migrate", node=node))
 
-    @mcp.tool()
-    def relocate_ha_resource(sid: str, node: str) -> str:
-        """Request relocation of an HA resource to a different node.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
+    def relocate_ha_resource(
+        sid: Annotated[str, Field(description="HA resource ID ('type:vmid').")],
+        node: Annotated[str, Field(description="Target node for resource relocation.")],
+    ) -> str:
+        """Request relocation of an HA resource to another node (may stop/start if offline).
+
+        Use when moving HA resources during node maintenance.
+        To perform live migration without downtime, use migrate_ha_resource instead.
 
         Args:
             sid: Resource ID.
@@ -129,29 +170,42 @@ def register(mcp: FastMCP) -> None:
 
     # ── HA Groups ─────────────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def list_ha_groups() -> str:
-        """List HA groups (define which nodes can run HA resources)."""
+        """List configured HA node groups and their member priorities.
+
+        Use when auditing node groups created for failover targeting.
+        To view specific group configuration, use get_ha_group instead.
+        """
         return format_response(api_request("get", "/cluster/ha/groups"))
 
-    @mcp.tool()
-    def get_ha_group(group: str) -> str:
-        """Get HA group configuration.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_ha_group(
+        group: Annotated[str, Field(description="HA group identifier.")],
+    ) -> str:
+        """Get node priority assignments and failback rules for an HA group.
+
+        Use when inspecting node priority ordering for failover target groups.
 
         Args:
             group: Group ID.
         """
         return format_response(api_request("get", f"/cluster/ha/groups/{group}"))
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
     def create_ha_group(
-        group: str,
-        nodes: str,
-        nofailback: bool = False,
-        restricted: bool = False,
-        comment: str = "",
+        group: Annotated[str, Field(description="Unique identifier for the new HA group.")],
+        nodes: Annotated[
+            str,
+            Field(description="Node list with optional priorities (e.g., 'node1:2,node2:1' - higher is preferred)."),
+        ],
+        nofailback: Annotated[bool, Field(description="If True, do not automatically fail back to higher priority node on recovery.")] = False,
+        restricted: Annotated[bool, Field(description="If True, strictly restrict resources to nodes in this group.")] = False,
+        comment: Annotated[str, Field(description="Optional description or note for the group.")] = "",
     ) -> str:
-        """Create an HA group.
+        """Create an HA group defining node preferences and failover constraints.
+
+        Use when establishing specific host node preferences for HA resource placement.
 
         Args:
             group: Group ID.
@@ -169,9 +223,18 @@ def register(mcp: FastMCP) -> None:
             params["comment"] = comment
         return format_response(api_request("post", "/cluster/ha/groups", **params))
 
-    @mcp.tool()
-    def update_ha_group(group: str, nodes: str = "", nofailback: bool = False, restricted: bool = False, comment: str = "", delete: str = "") -> str:
-        """Update an HA group.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
+    def update_ha_group(
+        group: Annotated[str, Field(description="HA group identifier to update.")],
+        nodes: Annotated[str, Field(description="Updated node list with priorities.")] = "",
+        nofailback: Annotated[bool, Field(description="If True, disable automatic failback.")] = False,
+        restricted: Annotated[bool, Field(description="If True, restrict execution to group nodes.")] = False,
+        comment: Annotated[str, Field(description="Updated description.")] = "",
+        delete: Annotated[str, Field(description="Comma-separated properties to delete.")] = "",
+    ) -> str:
+        """Update node priority lists or failback rules for an HA group.
+
+        Use when adding nodes or modifying failover priorities for an HA group.
 
         Args:
             group: Group ID.
@@ -194,9 +257,13 @@ def register(mcp: FastMCP) -> None:
             params["delete"] = delete
         return format_response(api_request("put", f"/cluster/ha/groups/{group}", **params))
 
-    @mcp.tool()
-    def delete_ha_group(group: str) -> str:
-        """Delete an HA group.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def delete_ha_group(
+        group: Annotated[str, Field(description="HA group identifier to delete.")],
+    ) -> str:
+        """Delete an HA group from Proxmox cluster configuration.
+
+        Use when removing obsolete HA node preference groups.
 
         Args:
             group: Group ID.

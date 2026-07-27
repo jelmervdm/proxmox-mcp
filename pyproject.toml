@@ -1,6 +1,6 @@
 [project]
 name = "proxmox-mcp-server"
-version = "1.0.3"
+version = "1.0.4"
 description = "MCP server for Proxmox VE infrastructure management"
 readme = "README.md"
 license = {text = "Apache-2.0"}
@@ -51,6 +51,7 @@ include = ["proxmox_mcp*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+pythonpath = ["src"]
 testpaths = ["tests"]
 filterwarnings = [
     "ignore::pytest.PytestAssertRewriteWarning"

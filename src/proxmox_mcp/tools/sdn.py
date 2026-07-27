@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
+from pydantic import Field
 
 from proxmox_mcp.client import api_request, format_response
 
@@ -12,23 +16,41 @@ def register(mcp: FastMCP) -> None:
 
     # ── VNets ─────────────────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def list_sdn_vnets() -> str:
-        """List SDN virtual networks (VNets)."""
+        """List SDN virtual networks (VNets) configured on the cluster.
+
+        Use when reviewing available software-defined network bridges.
+        To view details for a specific VNet, use get_sdn_vnet instead.
+        """
         return format_response(api_request("get", "/cluster/sdn/vnets"))
 
-    @mcp.tool()
-    def get_sdn_vnet(vnet: str) -> str:
-        """Get SDN VNet configuration.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_sdn_vnet(
+        vnet: Annotated[str, Field(description="VNet identifier (e.g., 'vnet0').")],
+    ) -> str:
+        """Get SDN VNet configuration details.
+
+        Use when inspecting VLAN tags, assigned zones, or bridge properties for a VNet.
+        To list all virtual networks, use list_sdn_vnets instead.
 
         Args:
             vnet: VNet ID.
         """
         return format_response(api_request("get", f"/cluster/sdn/vnets/{vnet}"))
 
-    @mcp.tool()
-    def create_sdn_vnet(vnet: str, zone: str, tag: int = 0, alias: str = "", vlanaware: bool = False) -> str:
-        """Create an SDN VNet.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
+    def create_sdn_vnet(
+        vnet: Annotated[str, Field(description="Name/ID for the new VNet.")],
+        zone: Annotated[str, Field(description="Associated SDN zone ID (e.g., 'myzone').")],
+        tag: Annotated[int, Field(description="Optional VLAN tag (0 for un-tagged).")] = 0,
+        alias: Annotated[str, Field(description="Display alias or description for the VNet.")] = "",
+        vlanaware: Annotated[bool, Field(description="If True, enable VLAN-aware bridge mode.")] = False,
+    ) -> str:
+        """Create a new SDN virtual network (VNet).
+
+        Use when creating isolated or tagged virtual network segments for VMs and containers.
+        To apply pending SDN changes to cluster nodes, use apply_sdn_changes.
 
         Args:
             vnet: VNet ID.
@@ -46,9 +68,17 @@ def register(mcp: FastMCP) -> None:
             params["vlanaware"] = 1
         return format_response(api_request("post", "/cluster/sdn/vnets", **params))
 
-    @mcp.tool()
-    def update_sdn_vnet(vnet: str, zone: str = "", tag: int = -1, alias: str = "", delete: str = "") -> str:
-        """Update an SDN VNet.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
+    def update_sdn_vnet(
+        vnet: Annotated[str, Field(description="VNet ID to update.")],
+        zone: Annotated[str, Field(description="New associated zone ID.")] = "",
+        tag: Annotated[int, Field(description="New VLAN tag (-1 to leave unchanged).")] = -1,
+        alias: Annotated[str, Field(description="Updated display alias.")] = "",
+        delete: Annotated[str, Field(description="Comma-separated properties to delete.")] = "",
+    ) -> str:
+        """Update configuration properties of an existing SDN VNet.
+
+        Use when modifying zone associations, VLAN tags, or aliases.
 
         Args:
             vnet: VNet ID.
@@ -68,9 +98,13 @@ def register(mcp: FastMCP) -> None:
             params["delete"] = delete
         return format_response(api_request("put", f"/cluster/sdn/vnets/{vnet}", **params))
 
-    @mcp.tool()
-    def delete_sdn_vnet(vnet: str) -> str:
-        """Delete an SDN VNet.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def delete_sdn_vnet(
+        vnet: Annotated[str, Field(description="ID of the VNet to delete.")],
+    ) -> str:
+        """Delete an SDN virtual network.
+
+        Use when removing unused SDN VNet definitions.
 
         Args:
             vnet: VNet ID.
@@ -79,18 +113,30 @@ def register(mcp: FastMCP) -> None:
 
     # ── VNet Subnets ──────────────────────────────────────────────────
 
-    @mcp.tool()
-    def list_sdn_subnets(vnet: str) -> str:
-        """List subnets for an SDN VNet.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def list_sdn_subnets(
+        vnet: Annotated[str, Field(description="VNet ID for which to list subnets.")],
+    ) -> str:
+        """List IP subnets associated with an SDN VNet.
+
+        Use when inspecting CIDRs, gateways, and SNAT rules for a VNet.
 
         Args:
             vnet: VNet ID.
         """
         return format_response(api_request("get", f"/cluster/sdn/vnets/{vnet}/subnets"))
 
-    @mcp.tool()
-    def create_sdn_subnet(vnet: str, subnet: str, gateway: str = "", snat: bool = False, dnszoneprefix: str = "") -> str:
-        """Create a subnet for an SDN VNet.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
+    def create_sdn_subnet(
+        vnet: Annotated[str, Field(description="VNet ID to attach the subnet to.")],
+        subnet: Annotated[str, Field(description="Subnet CIDR notation (e.g., '10.0.0.0/24').")],
+        gateway: Annotated[str, Field(description="Gateway IP address (e.g., '10.0.0.1').")] = "",
+        snat: Annotated[bool, Field(description="Enable Source Network Address Translation (SNAT).")] = False,
+        dnszoneprefix: Annotated[str, Field(description="DNS zone prefix for IPAM automatic registration.")] = "",
+    ) -> str:
+        """Create an IP subnet inside an SDN VNet.
+
+        Use when configuring IP ranges, default gateways, or SNAT for virtual networks.
 
         Args:
             vnet: VNet ID.
@@ -110,23 +156,42 @@ def register(mcp: FastMCP) -> None:
 
     # ── Zones ─────────────────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def list_sdn_zones() -> str:
-        """List SDN zones."""
+        """List SDN network zones (VLAN, VXLAN, EVPN, Simple).
+
+        Use when auditing cluster networking zone topologies.
+        To inspect a specific zone's configuration, use get_sdn_zone instead.
+        """
         return format_response(api_request("get", "/cluster/sdn/zones"))
 
-    @mcp.tool()
-    def get_sdn_zone(zone: str) -> str:
-        """Get SDN zone configuration.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_sdn_zone(
+        zone: Annotated[str, Field(description="SDN Zone ID.")],
+    ) -> str:
+        """Get detailed configuration parameters for an SDN zone.
+
+        Use when checking MTU, IPAM bindings, or host node membership for a zone.
 
         Args:
             zone: Zone ID.
         """
         return format_response(api_request("get", f"/cluster/sdn/zones/{zone}"))
 
-    @mcp.tool()
-    def create_sdn_zone(zone: str, type: str, nodes: str = "", ipam: str = "", dns: str = "", bridge: str = "", mtu: int = 0) -> str:
-        """Create an SDN zone.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=True))
+    def create_sdn_zone(
+        zone: Annotated[str, Field(description="Unique ID for the new zone.")],
+        type: Annotated[str, Field(description="Zone technology type: 'simple', 'vlan', 'qinq', 'vxlan', or 'evpn'.")],
+        nodes: Annotated[str, Field(description="Comma-separated node list to assign to this zone.")] = "",
+        ipam: Annotated[str, Field(description="IPAM plugin identifier (e.g., 'pve').")] = "",
+        dns: Annotated[str, Field(description="DNS plugin identifier.")] = "",
+        bridge: Annotated[str, Field(description="Physical bridge interface (e.g., 'vmbr0').")] = "",
+        mtu: Annotated[int, Field(description="Custom MTU size for zone interfaces.")] = 0,
+    ) -> str:
+        """Create a new SDN zone defining underlying network transport layer.
+
+        Use when defining EVPN, VXLAN, or VLAN overlay boundaries.
+        To apply pending SDN configurations to all nodes, use apply_sdn_changes.
 
         Args:
             zone: Zone ID.
@@ -145,9 +210,13 @@ def register(mcp: FastMCP) -> None:
             params["mtu"] = mtu
         return format_response(api_request("post", "/cluster/sdn/zones", **params))
 
-    @mcp.tool()
-    def delete_sdn_zone(zone: str) -> str:
-        """Delete an SDN zone.
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=True, idempotentHint=True))
+    def delete_sdn_zone(
+        zone: Annotated[str, Field(description="Zone ID to delete.")],
+    ) -> str:
+        """Delete an SDN zone from the cluster.
+
+        Use when decommissioning a network zone. Note that associated VNets must be deleted first.
 
         Args:
             zone: Zone ID.
@@ -156,14 +225,21 @@ def register(mcp: FastMCP) -> None:
 
     # ── Controllers ───────────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def list_sdn_controllers() -> str:
-        """List SDN controllers (e.g. EVPN controller)."""
+        """List SDN control-plane controllers (e.g., BGP/EVPN controllers).
+
+        Use when auditing SDN routing controller nodes.
+        """
         return format_response(api_request("get", "/cluster/sdn/controllers"))
 
-    @mcp.tool()
-    def get_sdn_controller(controller: str) -> str:
-        """Get SDN controller configuration.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_sdn_controller(
+        controller: Annotated[str, Field(description="Controller ID.")],
+    ) -> str:
+        """Get configuration for a specific SDN controller.
+
+        Use when inspecting controller AS numbers, peers, or routing options.
 
         Args:
             controller: Controller ID.
@@ -172,14 +248,21 @@ def register(mcp: FastMCP) -> None:
 
     # ── IPAM ──────────────────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def list_sdn_ipams() -> str:
-        """List IPAM (IP Address Management) plugins."""
+        """List configured IP Address Management (IPAM) plugins.
+
+        Use when reviewing IPAM backends (e.g., PVE internal, NetBox, phpIPAM).
+        """
         return format_response(api_request("get", "/cluster/sdn/ipams"))
 
-    @mcp.tool()
-    def get_sdn_ipam(ipam: str) -> str:
-        """Get IPAM plugin configuration.
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
+    def get_sdn_ipam(
+        ipam: Annotated[str, Field(description="IPAM plugin identifier.")],
+    ) -> str:
+        """Get configuration details for an IPAM plugin.
+
+        Use when checking IPAM server endpoints or API credentials.
 
         Args:
             ipam: IPAM ID.
@@ -188,14 +271,20 @@ def register(mcp: FastMCP) -> None:
 
     # ── DNS ───────────────────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def list_sdn_dns() -> str:
-        """List SDN DNS plugins."""
+        """List configured SDN DNS integration plugins.
+
+        Use when auditing automatic DNS record registration backends.
+        """
         return format_response(api_request("get", "/cluster/sdn/dns"))
 
     # ── Apply SDN Changes ─────────────────────────────────────────────
 
-    @mcp.tool()
+    @mcp.tool(annotations=ToolAnnotations(destructiveHint=False, idempotentHint=False))
     def apply_sdn_changes() -> str:
-        """Apply pending SDN configuration changes to all nodes."""
+        """Reload and apply pending SDN configurations across all PVE cluster nodes.
+
+        Use after adding, updating, or deleting VNets, subnets, or zones to push changes live.
+        """
         return format_response(api_request("put", "/cluster/sdn"))
