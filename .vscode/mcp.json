@@ -1,5 +1,5 @@
 {
-  "servers": {
+  "mcpServers": {
     "proxmox": {
       "command": "docker",
       "args": [
