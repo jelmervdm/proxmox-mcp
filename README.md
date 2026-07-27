@@ -20,7 +20,7 @@ This server is audited against the **[Tool Definition Quality Score (TDQS)](http
 
 ## Distributions
 
-- **Docker (GHCR)**: `ghcr.io/jelmervdm/proxmox-mcp:main`
+- **Docker (GHCR)**: `ghcr.io/jelmervdm/proxmox-mcp:latest`
 
 ## Tools
 
@@ -506,7 +506,7 @@ To bypass this limit, set the environment variable **`TOOL_ROUTING=1`** (or `TOO
         "-e", "PROXMOX_TOKEN_NAME",
         "-e", "PROXMOX_TOKEN_VALUE",
         "-e", "TOOL_ROUTING",
-        "ghcr.io/jelmervdm/proxmox-mcp:main"
+        "ghcr.io/jelmervdm/proxmox-mcp:latest"
       ],
       "env": {
         "PROXMOX_HOST": "192.168.1.100",
