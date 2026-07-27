@@ -449,7 +449,64 @@ If you prefer to run directly from source without containers:
   }
 }
 ```
+### Handling Tool Limits in AI Clients (Antigravity IDE / Cursor)
 
+When connecting `proxmox-mcp` directly, AI clients like **Antigravity IDE** or **Cursor** may reject the server with an error such as:
+> `proxmox: adding this instance with 286 enabled tools would exceed max limit of 100`
+
+To bypass this limit, set the environment variable **`TOOL_ROUTING=1`** (or `TOOL_ROUTING=true`).
+
+#### How Tool Routing Works
+1. When `TOOL_ROUTING=1` is set, the server exposes only **3 base tools** (`route_tools`, `call_routed_tool`, `proxmox_api_raw`) to the MCP client (well under the 100 tool limit).
+2. The AI assistant uses `route_tools("your intent here")` to perform fast semantic search over all 285 tools.
+3. The AI assistant then executes activated tools via `call_routed_tool`.
+
+#### Example Config with Tool Routing Enabled (`uvx`):
+```json
+{
+  "mcpServers": {
+    "proxmox": {
+      "command": "uvx",
+      "args": ["--from", "git+https://github.com/jelmervdm/proxmox-mcp.git[router]", "proxmox-mcp-server"],
+      "env": {
+        "PROXMOX_HOST": "192.168.1.100",
+        "PROXMOX_PORT": "8006",
+        "PROXMOX_USER": "root@pam",
+        "PROXMOX_TOKEN_NAME": "mcp",
+        "PROXMOX_TOKEN_VALUE": "your-token-here",
+        "TOOL_ROUTING": "1"
+      }
+    }
+  }
+}
+```
+
+#### Example Config with Container (`podman` / `docker`):
+```json
+{
+  "mcpServers": {
+    "proxmox": {
+      "command": "podman",
+      "args": [
+        "run", "-i", "--rm",
+        "-e", "PROXMOX_HOST",
+        "-e", "PROXMOX_USER",
+        "-e", "PROXMOX_TOKEN_NAME",
+        "-e", "PROXMOX_TOKEN_VALUE",
+        "-e", "TOOL_ROUTING",
+        "ghcr.io/jelmervdm/proxmox-mcp:main"
+      ],
+      "env": {
+        "PROXMOX_HOST": "192.168.1.100",
+        "PROXMOX_USER": "root@pam",
+        "PROXMOX_TOKEN_NAME": "mcp",
+        "PROXMOX_TOKEN_VALUE": "your-token-here",
+        "TOOL_ROUTING": "1"
+      }
+    }
+  }
+}
+```
 ### Configuration Options
 
 | Option | Environment Variable | Default |
