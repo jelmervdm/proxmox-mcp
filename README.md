@@ -16,7 +16,18 @@ This server is audited against the **[Tool Definition Quality Score (TDQS)](http
 - **Score:** `5.00 / 5.00` (**Tier A+**)
 - **Behavioral Annotations (`ToolAnnotations`):** 100% of tools specify `readOnlyHint`, `destructiveHint`, and `idempotentHint` metadata.
 - **Parameter Descriptions:** 100% of tool parameters use explicit Pydantic `Annotated[T, Field(description=...)]` metadata.
-- **Operational Guidelines:** Standardized docstrings detailing explicit "Use when..." context across all 285 tools.
+- **Operational Guidelines:** Standardized docstrings detailing explicit "Use when..." context across all 286 tools.
+
+```text
+---------------- SCORECARD METRICS ----------------
+Tools Evaluated              : 286
+Behavioral Annotations      : 286 / 286 (100.0%)
+100% Parameter Descriptions : 286 / 286 (100.0%)
+Usage Guidelines (Docstrings): 286 / 286 (100.0%)
+Overall TDQS Score           : 5.00 / 5.00
+TDQS Quality Tier            : Tier A+
+========================================================
+```
 
 ## Distributions
 

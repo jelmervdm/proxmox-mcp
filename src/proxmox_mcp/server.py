@@ -44,12 +44,22 @@ sdn.register(mcp)
 storage.register(mcp)
 
 
+from typing import Annotated, Any
+from pydantic import Field
+from mcp.types import ToolAnnotations
+
 # ── Generic escape-hatch tool ────────────────────────────────────────
 
 
-@mcp.tool()
-def proxmox_api_raw(method: str, path: str, params: str = "{}") -> str:
+@mcp.tool(annotations=ToolAnnotations(destructiveHint=True, readOnlyHint=False, idempotentHint=False))
+def proxmox_api_raw(
+    method: Annotated[str, Field(description="HTTP method: 'get', 'post', 'put', or 'delete'.")],
+    path: Annotated[str, Field(description="API path (e.g. '/nodes/pve1/qemu/100/status/current').")],
+    params: Annotated[str, Field(description="JSON string of parameters (e.g. '{\"memory\": 4096}').")] = "{}",
+) -> str:
     """Make an arbitrary Proxmox API call for any endpoint not covered by specific tools.
+
+    Use when performing raw Proxmox VE API queries or operations not available in high-level tools.
 
     Args:
         method: HTTP method: 'get', 'post', 'put', 'delete'.
