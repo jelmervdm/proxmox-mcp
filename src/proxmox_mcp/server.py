@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any
+from typing import Annotated, Any
 
+from pydantic import Field
 from mcp.server.fastmcp import FastMCP, Context
+from mcp.types import ToolAnnotations
 
 from proxmox_mcp.tools import (
     access,
@@ -43,10 +45,6 @@ qemu.register(mcp)
 sdn.register(mcp)
 storage.register(mcp)
 
-
-from typing import Annotated, Any
-from pydantic import Field
-from mcp.types import ToolAnnotations
 
 # ── Generic escape-hatch tool ────────────────────────────────────────
 

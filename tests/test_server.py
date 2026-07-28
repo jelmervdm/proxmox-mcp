@@ -1,7 +1,6 @@
 """Tests for the MCP server entry point and tool registration."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class TestServerImport:

@@ -957,7 +957,7 @@ router = [
 [package.metadata]
 requires-dist = [
     { name = "fastembed", marker = "extra == 'router'", specifier = ">=0.4.0" },
-    { name = "mcp", extras = ["cli"], specifier = ">=1.0.0" },
+    { name = "mcp", extras = ["cli"], specifier = ">=1.2.0,<2.0.0" },
     { name = "numpy", marker = "extra == 'router'", specifier = ">=1.26.0" },
     { name = "proxmoxer", specifier = ">=2.0.0" },
     { name = "requests", specifier = ">=2.31.0" },
