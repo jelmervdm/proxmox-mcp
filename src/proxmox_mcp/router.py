@@ -70,7 +70,7 @@ def get_router() -> ToolRouter | None:
     if _router is not None:
         return _router
 
-    enabled = os.environ.get("TOOL_ROUTING", "").lower() in ("1", "true", "yes")
+    enabled = os.environ.get("TOOL_ROUTING", "").lower() in ("true", "1", "yes")
     if not enabled:
         return None
 

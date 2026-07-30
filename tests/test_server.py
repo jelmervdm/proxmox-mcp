@@ -82,3 +82,31 @@ class TestMainEntryPoint:
 
             main()
             mock_run.assert_called_once_with(transport="stdio")
+
+
+class TestToolRoutingConfig:
+    """Test tool routing mode environment variable parsing."""
+
+    def test_is_routed_mode_enabled_values(self):
+        from proxmox_mcp.server import _is_routed_mode
+        import os
+
+        for val in ["true", "True", "TRUE", "1", "yes", "YES"]:
+            with patch.dict(os.environ, {"TOOL_ROUTING": val}):
+                assert _is_routed_mode() is True
+
+    def test_is_routed_mode_disabled_values(self):
+        from proxmox_mcp.server import _is_routed_mode
+        import os
+
+        for val in ["false", "False", "FALSE", "0", "no", "NO", ""]:
+            with patch.dict(os.environ, {"TOOL_ROUTING": val}):
+                assert _is_routed_mode() is False
+
+    def test_is_routed_mode_unset(self):
+        from proxmox_mcp.server import _is_routed_mode
+        import os
+
+        with patch.dict(os.environ, {}, clear=True):
+            assert _is_routed_mode() is False
+

@@ -80,7 +80,7 @@ _router_indexed = False
 
 
 def _is_routed_mode() -> bool:
-    return os.environ.get("TOOL_ROUTING", "").lower() in ("1", "true", "yes")
+    return os.environ.get("TOOL_ROUTING", "").lower() in ("true", "1", "yes")
 
 
 def _all_tools() -> list[Any]:

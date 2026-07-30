@@ -380,7 +380,7 @@ Recommended when running via container. Podman is fully supported on Fedora/RHEL
     "proxmox": {
       "command": "podman",
       "args": [
-        "run", "-i", "--rm",
+        "run", "-i", "--rm", "--pull=newer",
         "-e", "PROXMOX_HOST",
         "-e", "PROXMOX_PORT",
         "-e", "PROXMOX_USER",
@@ -477,10 +477,10 @@ If you prefer to run directly from source without containers:
 When connecting `proxmox-mcp` directly, AI clients like **Antigravity IDE** or **Cursor** may reject the server with an error such as:
 > `proxmox: adding this instance with 286 enabled tools would exceed max limit of 100`
 
-To bypass this limit, set the environment variable **`TOOL_ROUTING=1`** (or `TOOL_ROUTING=true`).
+To bypass this limit, set the environment variable **`TOOL_ROUTING=true`** (or `TOOL_ROUTING=1`).
 
 #### How Tool Routing Works
-1. When `TOOL_ROUTING=1` is set, the server exposes only **3 base tools** (`route_tools`, `call_routed_tool`, `proxmox_api_raw`) to the MCP client (well under the 100 tool limit).
+1. When `TOOL_ROUTING=true` is set, the server exposes only **3 base tools** (`route_tools`, `call_routed_tool`, `proxmox_api_raw`) to the MCP client (well under the 100 tool limit).
 2. The AI assistant uses `route_tools("your intent here")` to perform fast semantic search over all 285 tools.
 3. The AI assistant then executes activated tools via `call_routed_tool`.
 
@@ -497,7 +497,7 @@ To bypass this limit, set the environment variable **`TOOL_ROUTING=1`** (or `TOO
         "PROXMOX_USER": "root@pam",
         "PROXMOX_TOKEN_NAME": "mcp",
         "PROXMOX_TOKEN_VALUE": "your-token-here",
-        "TOOL_ROUTING": "1"
+        "TOOL_ROUTING": "true"
       }
     }
   }
@@ -511,7 +511,7 @@ To bypass this limit, set the environment variable **`TOOL_ROUTING=1`** (or `TOO
     "proxmox": {
       "command": "podman",
       "args": [
-        "run", "-i", "--rm",
+        "run", "-i", "--rm", "--pull=newer",
         "-e", "PROXMOX_HOST",
         "-e", "PROXMOX_USER",
         "-e", "PROXMOX_TOKEN_NAME",
@@ -524,7 +524,7 @@ To bypass this limit, set the environment variable **`TOOL_ROUTING=1`** (or `TOO
         "PROXMOX_USER": "root@pam",
         "PROXMOX_TOKEN_NAME": "mcp",
         "PROXMOX_TOKEN_VALUE": "your-token-here",
-        "TOOL_ROUTING": "1"
+        "TOOL_ROUTING": "true"
       }
     }
   }
