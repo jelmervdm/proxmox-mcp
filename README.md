@@ -396,7 +396,7 @@ Recommended when running via container. Podman is fully supported on Fedora/RHEL
         "PROXMOX_USER": "root@pam",
         "PROXMOX_TOKEN_NAME": "mcp",
         "PROXMOX_TOKEN_VALUE": "your-token-here",
-        "PROXMOX_VERIFY_SSL": "0",
+        "PROXMOX_VERIFY_SSL": "false",
         "PROXMOX_TIMEOUT": "30"
       }
     }
@@ -423,7 +423,7 @@ If you prefer to run directly from source without containers:
         "PROXMOX_USER": "root@pam",
         "PROXMOX_TOKEN_NAME": "mcp",
         "PROXMOX_TOKEN_VALUE": "your-token-here",
-        "PROXMOX_VERIFY_SSL": "0",
+        "PROXMOX_VERIFY_SSL": "false",
         "PROXMOX_TIMEOUT": "30"
       }
     }
@@ -444,7 +444,7 @@ If you prefer to run directly from source without containers:
         "PROXMOX_USER": "root@pam",
         "PROXMOX_TOKEN_NAME": "mcp",
         "PROXMOX_TOKEN_VALUE": "your-token-here",
-        "PROXMOX_VERIFY_SSL": "0",
+        "PROXMOX_VERIFY_SSL": "false",
         "PROXMOX_TIMEOUT": "30"
       }
     }
@@ -465,7 +465,7 @@ If you prefer to run directly from source without containers:
         "PROXMOX_USER": "root@pam",
         "PROXMOX_TOKEN_NAME": "mcp",
         "PROXMOX_TOKEN_VALUE": "your-token-here",
-        "PROXMOX_VERIFY_SSL": "0",
+        "PROXMOX_VERIFY_SSL": "false",
         "PROXMOX_TIMEOUT": "30"
       }
     }
@@ -540,7 +540,7 @@ To bypass this limit, set the environment variable **`TOOL_ROUTING=true`** (or `
 | API token name | `PROXMOX_TOKEN_NAME` | — |
 | API token value | `PROXMOX_TOKEN_VALUE` | — |
 | Password | `PROXMOX_PASSWORD` | — |
-| SSL verification | `PROXMOX_VERIFY_SSL` | `0` |
+| SSL verification | `PROXMOX_VERIFY_SSL` | `false` |
 | Request timeout (seconds) | `PROXMOX_TIMEOUT` | `30` |
 | Tool routing | `TOOL_ROUTING` | `false` |
 | Enable ContextForge Gateway | `ENABLE_CONTEXTFORGE_GATEWAY` | `false` |

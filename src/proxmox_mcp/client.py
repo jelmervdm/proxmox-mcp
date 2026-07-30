@@ -19,7 +19,7 @@ def _get_client() -> ProxmoxAPI:
     if not host:
         raise RuntimeError("PROXMOX_HOST environment variable is required")
 
-    verify_ssl = os.environ.get("PROXMOX_VERIFY_SSL", "0").lower() in ("1", "true", "yes")
+    verify_ssl = os.environ.get("PROXMOX_VERIFY_SSL", "false").lower() in ("true", "1", "yes")
     port = int(os.environ.get("PROXMOX_PORT") or "8006")
     timeout = int(os.environ.get("PROXMOX_TIMEOUT") or "30")
 

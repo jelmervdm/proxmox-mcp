@@ -72,6 +72,26 @@ class TestGetClient:
             assert kwargs["port"] == 443
             assert kwargs["verify_ssl"] is True
 
+    def test_verify_ssl_boolean_variations(self):
+        base_env = {
+            "PROXMOX_HOST": "10.0.0.1",
+            "PROXMOX_TOKEN_NAME": "tok",
+            "PROXMOX_TOKEN_VALUE": "val",
+        }
+        for val in ["true", "True", "TRUE", "1", "yes", "YES"]:
+            env = {**base_env, "PROXMOX_VERIFY_SSL": val}
+            with patch.dict("os.environ", env, clear=True), patch("proxmox_mcp.client.ProxmoxAPI") as mock_api:
+                _get_client()
+                _, kwargs = mock_api.call_args
+                assert kwargs["verify_ssl"] is True
+
+        for val in ["false", "False", "FALSE", "0", "no", "NO", ""]:
+            env = {**base_env, "PROXMOX_VERIFY_SSL": val}
+            with patch.dict("os.environ", env, clear=True), patch("proxmox_mcp.client.ProxmoxAPI") as mock_api:
+                _get_client()
+                _, kwargs = mock_api.call_args
+                assert kwargs["verify_ssl"] is False
+
     def test_get_client_caches(self):
         """get_client() should return the same cached instance on subsequent calls."""
         import proxmox_mcp.client as mod
