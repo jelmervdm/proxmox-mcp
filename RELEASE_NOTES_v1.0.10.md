@@ -16,3 +16,4 @@ Version 1.0.10 resolves `mcpgateway.config.SecurityConfigurationError: auth_encr
 Built automatically by GitHub Actions:
 - `ghcr.io/jelmervdm/proxmox-mcp:v1.0.10`
 - `ghcr.io/jelmervdm/proxmox-mcp:latest`
+
