@@ -17,3 +17,4 @@ Version 1.0.9 addresses startup failures when running in ContextForge Gateway mo
 Built automatically by GitHub Actions:
 - `ghcr.io/jelmervdm/proxmox-mcp:v1.0.9`
 - `ghcr.io/jelmervdm/proxmox-mcp:latest`
+
