@@ -217,7 +217,10 @@ def register(mcp: FastMCP) -> None:
         tags: Annotated[str, Field(description="Semicolon-separated tags.")] = "",
         hotplug: Annotated[str, Field(description="Hotplug features ('disk,network,usb,memory,cpu').")] = "",
         delete: Annotated[str, Field(description="Comma-separated settings to delete.")] = "",
-        extra_config: Annotated[str, Field(description="JSON string or comma-separated key=value pairs for any additional Proxmox QEMU parameters, such as virtual disks (e.g. '{\"scsi0\": \"local-zfs:vm-100-disk-0,mbps_wr=250,discard=on\"}'), secondary network devices, or custom hardware flags.")] = "",
+        extra_config: Annotated[
+            str,
+            Field(description="JSON string or key=value pairs for extra QEMU options (e.g. disk throttling, secondary NICs)."),
+        ] = "",
     ) -> str:
         """Update hardware resources, network interfaces, or boot order for an existing VM.
 

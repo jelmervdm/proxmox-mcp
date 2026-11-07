@@ -237,7 +237,10 @@ def register(mcp: FastMCP) -> None:
         features: Annotated[str, Field(description="Comma-separated feature flags (e.g., 'nesting=1').")] = "",
         tags: Annotated[str, Field(description="Semicolon-separated tags.")] = "",
         delete: Annotated[str, Field(description="Comma-separated keys to remove from config.")] = "",
-        extra_config: Annotated[str, Field(description="JSON string or comma-separated key=value pairs for extra LXC config options, such as mount points (e.g. '{\"mp0\": \"local-lvm:8,mp=/data\"}'), secondary network devices, or custom limits.")] = "",
+        extra_config: Annotated[
+            str,
+            Field(description="JSON string or comma-separated key=value pairs for extra LXC config options (e.g. mount points, net1)."),
+        ] = "",
     ) -> str:
         """Update hardware resources, network interface options, or settings of an existing container.
 
