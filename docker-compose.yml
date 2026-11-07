@@ -14,6 +14,7 @@ services:
       - PROXMOX_VERIFY_SSL=${PROXMOX_VERIFY_SSL:-false}
       - TOOL_ROUTING=${TOOL_ROUTING:-false}
       - ENABLE_CONTEXTFORGE_GATEWAY=${ENABLE_CONTEXTFORGE_GATEWAY:-false}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-}
     ports:
       - "8000:8000"
     restart: unless-stopped
