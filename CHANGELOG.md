@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.10] - 2026-11-07
+
+### Fixed
+- **ContextForge Gateway Secret and Credential Auto-Generation**: Extended `entrypoint.sh` fallback to cover all unconditional secrets and feature-gated credentials validated by `mcpgateway.config` (`AUTH_ENCRYPTION_SECRET`, `PLATFORM_ADMIN_PASSWORD`, `DEFAULT_USER_PASSWORD`, `BASIC_AUTH_PASSWORD` alongside `JWT_SECRET_KEY`). Resolves subsequent `mcpgateway.config.SecurityConfigurationError: auth_encryption_secret: unset placeholder (__REPLACE_ME__) rejected` and password length errors.
+
 ## [1.0.9] - 2026-11-06
 
 ### Fixed
