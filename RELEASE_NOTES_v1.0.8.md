@@ -38,3 +38,4 @@ Version 1.0.8 expands the Proxmox MCP server from 286 to **297 registered tools*
 Built automatically by GitHub Actions:
 - `ghcr.io/jelmervdm/proxmox-mcp:v1.0.8`
 - `ghcr.io/jelmervdm/proxmox-mcp:latest`
+
