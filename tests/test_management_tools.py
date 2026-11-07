@@ -37,7 +37,7 @@ class TestClusterTools:
 
     def test_update_replication_job(self, mock_proxmox_client):
         mock_proxmox_client.cluster.replication.__getattr__("100-0").put.return_value = None
-        result = api_request("put", "/cluster/replication/100-0", schedule="daily", rate=50.0, disable=1)
+        api_request("put", "/cluster/replication/100-0", schedule="daily", rate=50.0, disable=1)
         mock_proxmox_client.cluster.replication.__getattr__("100-0").put.assert_called_once_with(schedule="daily", rate=50.0, disable=1)
 
     def test_get_replication_log(self, mock_proxmox_client):
@@ -55,6 +55,21 @@ class TestClusterTools:
         }
         result = api_request("get", "/cluster/replication/100-0/status")
         assert result["fail_count"] == 0
+
+    def test_get_cluster_tasks_client_side_limit(self, mock_proxmox_client):
+        from mcp.server.fastmcp import FastMCP
+        from proxmox_mcp.tools import cluster
+
+        server = FastMCP("test")
+        cluster.register(server)
+        tool = server._tool_manager._tools["get_cluster_tasks"]
+
+        mock_proxmox_client.cluster.tasks.get.return_value = [
+            {"upid": "1"}, {"upid": "2"}, {"upid": "3"}
+        ]
+        res = tool.fn(limit=2)
+        mock_proxmox_client.cluster.tasks.get.assert_called_once_with()
+        assert len(json.loads(res)) == 2
 
 
 class TestAccessTools:

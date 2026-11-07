@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import shlex
 from typing import Annotated
 
 from mcp.server.fastmcp import FastMCP
@@ -801,7 +802,16 @@ def register(mcp: FastMCP) -> None:
     def vm_agent_exec(
         node: Annotated[str, Field(description="PVE host node name.")],
         vmid: Annotated[int, Field(description="QEMU VM ID.")],
-        command: Annotated[str, Field(description="Command binary path or executable command line string.")],
+        command: Annotated[
+            str | list[str],
+            Field(
+                description=(
+                    "Command to execute. A string is split into arguments using POSIX "
+                    "shell rules (quote paths with spaces). An array is passed through "
+                    "unchanged and recommended for Windows paths."
+                )
+            ),
+        ],
         input_data: Annotated[str, Field(description="Data string to pass to command stdin.")] = "",
     ) -> str:
         """Execute an arbitrary command inside a running VM via QEMU Guest Agent.
@@ -811,10 +821,13 @@ def register(mcp: FastMCP) -> None:
         Args:
             node: The node name.
             vmid: The VM ID.
-            command: The command to execute.
+            command: The command to execute (string or argv list).
             input_data: Data to pass to stdin.
         """
-        params: dict = {"command": command}
+        argv = shlex.split(command) if isinstance(command, str) else list(command)
+        if not argv:
+            raise ValueError("command must not be empty")
+        params: dict = {"command": argv}
         if input_data:
             params["input-data"] = input_data
         return format_response(api_request("post", f"/nodes/{node}/qemu/{vmid}/agent/exec", **params))

@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.11] - 2026-11-07
+
+### Fixed
+- **API Parameter Collisions**: Converted `method` and `path` parameters in `api_request` to positional-only (`method: str, path: str, /`). Resolves fatal `TypeError` collisions when forwarding API query parameters named `path` or `method` in tools such as `update_acl`, `get_permissions`, `create_storage`, and `proxmox_api_raw`.
+- **QEMU Guest Agent Argv Splitting**: Updated `vm_agent_exec` to accept `command: str | list[str]`. String commands are automatically split using POSIX shell rules (`shlex.split`), satisfying Proxmox QEMU Guest Agent array expectations while preserving list pass-through for Windows paths with backslashes.
+- **Cluster Tasks Client-Side Limit**: Updated `get_cluster_tasks` to slice results client-side (`tasks[:limit]`) since the Proxmox VE `/cluster/tasks` endpoint does not accept an API query `limit` parameter.
+
+### Added
+- **Raw API Lockdown Toggle**: Added support for `PROXMOX_DISABLE_RAW_API=true` environment variable to disable the `proxmox_api_raw` escape hatch in restricted environments.
+
 ## [1.0.10] - 2026-11-07
 
 ### Fixed

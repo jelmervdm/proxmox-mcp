@@ -66,6 +66,9 @@ def proxmox_api_raw(
     """
     import json as _json
 
+    if os.environ.get("PROXMOX_DISABLE_RAW_API", "").lower() in ("1", "true", "yes"):
+        return "Raw Proxmox API access is disabled by PROXMOX_DISABLE_RAW_API."
+
     parsed: dict = {}
     if params and params != "{}":
         parsed = _json.loads(params)

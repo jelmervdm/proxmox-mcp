@@ -133,6 +133,18 @@ class TestApiRequest:
         result = api_request("get", "/nodes/pve1/qemu/100/status/current")
         assert result is not None
 
+    def test_params_may_include_path_key(self, mock_proxmox_client):
+        """An API parameter named ``path`` must not collide with the path argument."""
+        mock_proxmox_client.access.acl.put.return_value = None
+        api_request("put", "/access/acl", path="/", roles="PVEAuditor")
+        mock_proxmox_client.access.acl.put.assert_called_once_with(path="/", roles="PVEAuditor")
+
+    def test_params_may_include_method_key(self, mock_proxmox_client):
+        """An API parameter named ``method`` must not collide with the method argument."""
+        mock_proxmox_client.nodes.get.return_value = []
+        api_request("get", "/nodes", method="custom")
+        mock_proxmox_client.nodes.get.assert_called_once_with(method="custom")
+
 
 class TestFormatResponse:
     def test_string_passthrough(self):

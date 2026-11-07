@@ -88,3 +88,24 @@ class TestLxcTools:
         mock_proxmox_client.nodes.pve1.lxc.__getattr__("200").delete.return_value = "UPID:..."
         result = api_request("delete", "/nodes/pve1/lxc/200")
         assert result is not None
+
+
+class TestVmAgentExec:
+    def test_vm_agent_exec_command_splitting_and_list(self, mock_proxmox_client):
+        from mcp.server.fastmcp import FastMCP
+        from proxmox_mcp.tools import qemu
+
+        server = FastMCP("test")
+        qemu.register(server)
+        tool = server._tool_manager._tools["vm_agent_exec"]
+
+        mock_proxmox_client.nodes.pve1.qemu.__getattr__("100").agent.exec.post.return_value = {"pid": 1234}
+
+        # Test string command splitting
+        res = tool.fn(node="pve1", vmid=100, command="uname -a")
+        mock_proxmox_client.nodes.pve1.qemu.__getattr__("100").agent.exec.post.assert_called_with(command=["uname", "-a"])
+        assert "1234" in res
+
+        # Test list command pass-through
+        tool.fn(node="pve1", vmid=100, command=["echo", "test"])
+        mock_proxmox_client.nodes.pve1.qemu.__getattr__("100").agent.exec.post.assert_called_with(command=["echo", "test"])

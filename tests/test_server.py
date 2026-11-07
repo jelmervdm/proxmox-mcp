@@ -129,3 +129,12 @@ class TestToolRoutingConfig:
             assert "call_routed_tool" in tools
             assert "proxmox_api_raw" in tools
 
+
+class TestRawApi:
+    def test_proxmox_api_raw_disabled_by_env(self):
+        from proxmox_mcp.server import proxmox_api_raw
+        import os
+
+        with patch.dict(os.environ, {"PROXMOX_DISABLE_RAW_API": "true"}):
+            res = proxmox_api_raw("get", "/nodes")
+            assert "disabled by PROXMOX_DISABLE_RAW_API" in res

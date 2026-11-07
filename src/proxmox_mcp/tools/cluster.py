@@ -64,7 +64,10 @@ def register(mcp: FastMCP) -> None:
         Args:
             limit: Maximum number of tasks to return.
         """
-        return format_response(api_request("get", "/cluster/tasks", limit=limit))
+        tasks = api_request("get", "/cluster/tasks")
+        if isinstance(tasks, list) and limit > 0:
+            tasks = tasks[:limit]
+        return format_response(tasks)
 
     @mcp.tool(annotations=ToolAnnotations(readOnlyHint=True))
     def get_cluster_log(
