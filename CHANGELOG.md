@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.9] - 2026-11-06
+
+### Fixed
+- **ContextForge Gateway JWT Secret Validation**: Added automatic fallback in `entrypoint.sh` to generate a 256-bit cryptographically secure key (`secrets.token_hex(32)`) when `JWT_SECRET_KEY` is not provided or set to `__REPLACE_ME__`. Resolves startup failure (`mcpgateway.config.SecurityConfigurationError: jwt_secret_key: unset placeholder (__REPLACE_ME__) rejected`) from strict secret enforcement in newer `mcp-contextforge-gateway` releases.
+- **Gateway Configuration**: Added `JWT_SECRET_KEY` pass-through in `docker-compose.yml` and documented usage in `.env.example`.
+
 ## [1.0.8] - 2026-11-06
 
 ### Added
