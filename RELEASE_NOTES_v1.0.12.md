@@ -11,3 +11,4 @@ Version 1.0.12 grants `contents: write` permissions to `.github/workflows/docker
 Built automatically by GitHub Actions:
 - `ghcr.io/jelmervdm/proxmox-mcp:v1.0.12`
 - `ghcr.io/jelmervdm/proxmox-mcp:latest`
+

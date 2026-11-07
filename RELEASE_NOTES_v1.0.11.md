@@ -23,3 +23,4 @@ Version 1.0.11 ports critical upstream reliability fixes for API parameter colli
 Built automatically by GitHub Actions:
 - `ghcr.io/jelmervdm/proxmox-mcp:v1.0.11`
 - `ghcr.io/jelmervdm/proxmox-mcp:latest`
+
