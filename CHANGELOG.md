@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.12] - 2026-11-07
+
+### Fixed
+- **CI Release Permissions**: Updated `.github/workflows/docker-publish.yml` permissions to `contents: write`. Resolves HTTP 403 Forbidden (`Resource not accessible by integration`) during automatic GitHub release creation via `softprops/action-gh-release@v2`.
+
 ## [1.0.11] - 2026-11-07
 
 ### Fixed
